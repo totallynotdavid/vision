@@ -1,0 +1,40 @@
+# CPU smoke config. The dummy backend exercises split, train, infer, metric,
+# logging, and stage orchestration before real data or a GPU is available.
+
+data:
+  raw_dir: data/synth
+  csv: train.csv
+  images: images
+  ext: .jpg
+  id_col: Id
+  target_col: Target
+
+cv:
+  k: 3
+  seed: 0
+  folds_file: runs/smoke/folds.json
+  clip_regex: "^(.*)_\\d+$"
+
+model:
+  backend: dummy
+  size: n
+  seed: 0
+  dummy_noise: 2.0
+  dummy_recall: 0.85
+
+aug: { mosaic: 1.0, mixup: 0.0, copy_paste: 0.0 }
+sampling: { rfs: false, rfs_thr: 0.001 }
+sahi: { enabled: false, tile: 320, overlap: 0.2 }
+tta: { enabled: false }
+tracking: { enabled: false }
+ensemble: { enabled: false, seeds: [0, 1], iou_thr: 0.55 }
+
+sweep:
+  results_csv: runs/smoke/results.csv
+  work_dir: runs/smoke
+  stages: [baseline, ablations, combine, final]
+  ablations:
+    sahi:      ["sahi.enabled=true"]
+    tracking:  ["tracking.enabled=true"]
+    size_s:    ["model.size=s"]
+  win_margin_std: 0.0
