@@ -1,0 +1,23 @@
+# data is large / not ours to commit
+data/raw/
+data/yolo/
+data/external/
+data/synth/
+
+# experiment outputs
+runs/
+checkpoints/
+*.pt
+results.csv
+wandb/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Frozen split files are part of experiment reproducibility.
+!splits/*.json

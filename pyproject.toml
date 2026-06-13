@@ -1,0 +1,41 @@
+[project]
+name = "vision"
+version = "0.1.0"
+description = "Oriented vehicle detection for MTC Peru intersections (Macro AP-rIoU@[0.50:0.80])"
+readme = "readme.md"
+requires-python = ">=3.14"
+
+dependencies = [
+    "numpy>=2.3,<3",
+    "shapely>=2.1,<3",            # Rotated IoU geometry.
+    "opencv-python-headless>=4.12", # OBB conversion, drawing, image IO.
+    "pandas>=2.3",                # CSV inputs and run logs.
+    "omegaconf>=2.3",             # Dotlist overrides and config composition.
+    "scipy>=1.16",                # Hungarian matching for tracking.
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+# Training extras pull torch and expect a GPU.
+train = [
+    "ultralytics>=8.3.0",        # YOLO26-OBB backend
+    "sahi>=0.11.31",             # Tiled inference.
+    "lap>=0.5.12",               # Optional fast assignment backend.
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vision"]
+
+[tool.ruff]
+target-version = "py314"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
