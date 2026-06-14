@@ -23,7 +23,7 @@ train = [
     "lap>=0.5.12",               # Optional fast assignment backend.
 ]
 dev = [
-    "pytest>=8.0",
+    "pytest>=9.1.0",
     "ruff>=0.6",
 ]
 
