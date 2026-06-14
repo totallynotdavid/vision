@@ -12,7 +12,7 @@ dependencies = [
     "pandas>=2.3",                # CSV inputs and run logs.
     "omegaconf>=2.3",             # Dotlist overrides and config composition.
     "scipy>=1.16",                # Hungarian matching for tracking.
-    "tqdm>=4.66",
+    "tqdm>=4.68.2",
 ]
 
 [project.optional-dependencies]
