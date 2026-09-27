@@ -1,4 +1,19 @@
 [tools]
-python = "3.14.6"
-uv = "0.11.21"
-ruff = "0.15.17"
+python = "3.14.7"
+uv = "0.12.19"
+ruff = "0.16.9"
+
+[tasks.lint]
+run = "uv run ruff check ."
+
+[tasks.format-check]
+run = "uv run ruff format --check ."
+
+[tasks.format]
+run = "uv run ruff format ."
+
+[tasks.test]
+run = "uv run pytest"
+
+[tasks.check]
+depends = ["lint", "format-check", "test"]
