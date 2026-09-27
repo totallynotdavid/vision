@@ -1,0 +1,16 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: jdx/mise-action@v4.3.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          cache: true
+      - run: uv sync --extra dev
+      - run: mise run check
