@@ -59,7 +59,7 @@ def angle_stats(gts: dict[str, np.ndarray]) -> dict:
         "min": float(angs.min()),
         "max": float(angs.max()),
         "mean": float(angs.mean()),
-        "n": int(len(angs)),
+        "n": len(angs),
     }
 
 

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from itertools import pairwise
+
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from .geometry import AngleConvention, DEFAULT_CONVENTION, rotated_iou_matrix
+from .geometry import DEFAULT_CONVENTION, AngleConvention, rotated_iou_matrix
 
 
 def _interp_angle(a0: float, a1: float, t: float) -> float:
@@ -60,7 +62,7 @@ def track_clip(
     }
     for tr in tracks:
         fis = sorted(tr["frames"].keys())
-        for a, b in zip(fis, fis[1:]):
+        for a, b in pairwise(fis):
             gap = b - a
             if gap <= 1 or gap > max_gap + 1:
                 continue
@@ -81,7 +83,7 @@ def track_all(preds: dict, clips: dict[str, list[str]], cfg: dict) -> dict:
     """Tracking is isolated per ordered clip."""
     tcfg = cfg.get("tracking", {})
     out = dict(preds)
-    for _clip, frame_order in clips.items():
+    for frame_order in clips.values():
         sub = {f: preds.get(f, np.zeros((0, 7))) for f in frame_order}
         tracked = track_clip(
             sub,

@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from . import CLASSES
-from .geometry import AngleConvention, DEFAULT_CONVENTION, obb_to_corners
+from .geometry import DEFAULT_CONVENTION, AngleConvention, obb_to_corners
 
 _PALETTE = [
     (66, 135, 245),

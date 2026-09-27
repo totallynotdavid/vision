@@ -7,7 +7,7 @@ from collections import defaultdict
 import numpy as np
 
 from . import CLASS_IDS, RIOU_THRESHOLDS
-from .geometry import AngleConvention, DEFAULT_CONVENTION, rotated_iou_matrix
+from .geometry import DEFAULT_CONVENTION, AngleConvention, rotated_iou_matrix
 
 
 def _ap_all_points(scores: np.ndarray, is_tp: np.ndarray, n_gt: int) -> float:

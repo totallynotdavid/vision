@@ -7,8 +7,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import CLASSES, CLASS_IDS
-from .geometry import AngleConvention, DEFAULT_CONVENTION, is_valid_box, obb_to_corners
+from . import CLASS_IDS, CLASSES
+from .geometry import DEFAULT_CONVENTION, AngleConvention, is_valid_box, obb_to_corners
 
 NONE_TOKEN = "none"
 

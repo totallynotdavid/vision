@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .geometry import AngleConvention, DEFAULT_CONVENTION, rotated_iou
+from .geometry import DEFAULT_CONVENTION, AngleConvention, rotated_iou
 
 
 def _fuse(cluster: np.ndarray) -> np.ndarray:

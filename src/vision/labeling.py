@@ -9,8 +9,8 @@ import numpy as np
 
 from . import CLASSES
 from .geometry import (
-    AngleConvention,
     DEFAULT_CONVENTION,
+    AngleConvention,
     corners_to_obb,
     obb_to_corners,
 )
