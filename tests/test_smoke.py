@@ -13,9 +13,10 @@ import pytest
 from omegaconf import OmegaConf
 
 from vision.convert import format_pred_cell, parse_gt_cell, parse_pred_cell
-from vision.geometry import obb_to_corners, corners_to_obb, rotated_iou
+from vision.geometry import corners_to_obb, obb_to_corners, rotated_iou
 from vision.metric import evaluate
 from vision.splits import clip_of, make_folds
+from vision.sweep import git_sha
 from vision.synth import make_synthetic
 
 
@@ -53,6 +54,14 @@ def test_metric_perfect_and_partial():
     assert evaluate(perfect, gts)["score"] == pytest.approx(1.0, abs=1e-6)
     empty = {"f1": np.zeros((0, 7))}
     assert evaluate(empty, gts)["score"] == 0.0
+
+
+def test_git_sha_falls_back_on_os_error(monkeypatch):
+    def raise_permission_error(*args, **kwargs):
+        raise PermissionError("git binary not executable")
+
+    monkeypatch.setattr("subprocess.check_output", raise_permission_error)
+    assert git_sha() == "nogit"
 
 
 def test_clip_grouped_split_has_no_leak():
