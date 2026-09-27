@@ -31,7 +31,7 @@ def git_sha() -> str:
             stderr=subprocess.DEVNULL,
             text=True,
         ).strip()
-    except Exception:
+    except subprocess.CalledProcessError, OSError:
         return "nogit"
 
 
@@ -79,7 +79,7 @@ def prepare_fold_dataset(cfg, gts, fold, img_wh, work_dir: Path) -> str:
         for fid in frames:
             reps = 1
             if rfs and split == "train":
-                reps = max(1, int(round(rfs.get(fid, 1.0))))
+                reps = max(1, round(rfs.get(fid, 1.0)))
             lines = gt_to_yolo_lines(gts.get(fid, np.zeros((0, 6))), w, h)
             for r in range(reps):
                 tag = fid if r == 0 else f"{fid}__r{r}"
@@ -88,7 +88,7 @@ def prepare_fold_dataset(cfg, gts, fold, img_wh, work_dir: Path) -> str:
                 if not dst.exists():
                     try:
                         os.symlink(src, dst)
-                    except FileExistsError, OSError:
+                    except OSError:
                         pass
                 (lbl_out / f"{tag}.txt").write_text("\n".join(lines))
 
