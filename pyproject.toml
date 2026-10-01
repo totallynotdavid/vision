@@ -18,7 +18,7 @@ dependencies = [
 [project.optional-dependencies]
 # Training extras pull torch and expect a GPU.
 train = [
-    "ultralytics>=8.4.163",       # YOLO26-OBB backend
+    "ultralytics>=8.4.164",       # YOLO26-OBB backend
     "sahi>=0.12.7",               # Tiled inference.
     "lap>=0.5.13",                # Optional fast assignment backend.
 ]
