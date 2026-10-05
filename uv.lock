@@ -1160,7 +1160,7 @@ wheels = [
 
 [[package]]
 name = "sahi"
-version = "0.12.7"
+version = "0.12.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1174,9 +1174,9 @@ dependencies = [
     { name = "shapely" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/d5/fa76a9884fe1f11524eb48e164b1d5341c89d451f466b6f71477a0e2f39a/sahi-0.12.7.tar.gz", hash = "sha256:6ee9b97a0070c186cd00f97306f42c342c4cfa1f9f82754ace6964caf3e77ec3", size = 4756386, upload-time = "2026-09-25T02:55:40.06Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/32/1e85bf558077a7783f88aa014f1b4025341cee8047c2416760a41fc9ac56/sahi-0.12.8.tar.gz", hash = "sha256:f2074b3b3aa0f655dbdd69fbb1f1a0b985220f5fb3d920a4206eba160d37028a", size = 4760542, upload-time = "2026-09-30T16:53:06.882Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/c6/d701f98586b6e5fa05bfeda3fe111c4a215b25624bee91477ecb05da9503/sahi-0.12.7-py3-none-any.whl", hash = "sha256:301202b5f31e600ad5a125c2c3a728322acdb844a6fcd4d0433cb7e7652ee23b", size = 155910, upload-time = "2026-09-25T02:55:37.985Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/5f/3685d9b95dfcfd17b26ce8aa6b22e7e2b012f39b024097e495b23ea87d76/sahi-0.12.8-py3-none-any.whl", hash = "sha256:6e0969110480fbb0a340b8504446b408c254f6208fe2bd4384b38b30bb4ff471", size = 156252, upload-time = "2026-09-30T16:53:05.09Z" },
 ]
 
 [[package]]
@@ -1482,7 +1482,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=3.0.6" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.9" },
-    { name = "sahi", marker = "extra == 'train'", specifier = ">=0.12.7" },
+    { name = "sahi", marker = "extra == 'train'", specifier = ">=0.12.8" },
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "shapely", specifier = ">=2.1.2,<3" },
     { name = "tqdm", specifier = ">=4.70.1" },
