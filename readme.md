@@ -1,72 +1,71 @@
-# Oriented vehicle detection
+# vision
 
-Detect and classify 9 vehicle classes with oriented bounding boxes.
-Official metric: **Macro AP-rIoU@[0.50:0.80]**. Average precision is averaged
-over 9 classes (equal weight) and 7 rotated-IoU thresholds (0.50 to 0.80, step
-0.05).
+Oriented vehicle detection for MTC Peru intersections. The task is to find
+vehicles in traffic-camera frames as rotated boxes in nine classes (auto, combi,
+microbus, minibus, omnibus, articulado, camion, mototaxi, motocicleta). The
+official metric is Macro AP-rIoU@[0.50:0.80].
 
-Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/). `mise` pins the
-toolchain (`mise.toml`); otherwise `uv` fetches the interpreter on first sync.
+This repository is the experiment harness for that task. It reproduces the
+metric locally, splits frames into clip-grouped cross-validation folds, and
+scores one training or inference change at a time. It has no command that
+predicts a test set.
 
-## Quickstart (no data, no GPU)
-
-The quickstart uses synthetic data and a CPU-only dummy backend. It validates
-the pipeline before real data or a GPU is available.
+Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync --extra dev
-uv run pytest
-uv run python -m vision.synth data/synth
-uv run python -m vision.sweep --config configs/smoke.yaml
 ```
 
-## Set up real data
+## Try it without data or a GPU
 
-The training extra installs the model backend and tiled-inference dependencies.
-The training backend pulls torch and expects a GPU.
+Generate a synthetic dataset and sweep it with the CPU-only dummy backend:
 
-1. Drop the data in `data/raw/` (frames plus `train.csv`).
-2. `uv run python -m vision.data inspect data/raw`. This derives constants from
-   image size and class counts (image size, tile size, loss weights).
-3. `uv run python -m vision.viz data/raw`. Review the overlays in
-   `runs/calibration/` and **confirm the angle convention before training**. If
-   boxes rotate the wrong way, flip `ccw` in `vision.geometry`.
-4. Point `configs/base.yaml:data.raw_dir` at the data, set `cv.clip_regex` to the
-   real frame-id format, then start the real-data sweep:
+```console
+$ uv run python -m vision.synth data/synth
+synthetic dataset -> data/synth/train.csv (640x384)
+$ uv run python -m vision.sweep --config configs/smoke.yaml
+== baseline ==
+  [baseline] mean=0.7732 +/- 0.0624
+== ablations (single-variable, warm-started from baseline) ==
+  [abl_sahi] mean=0.7867 +/- 0.0507
+  [abl_tracking] mean=0.7732 +/- 0.0624
+  [abl_size_s] mean=0.7732 +/- 0.0624
+== combine winners ==
+  winner: sahi (+0.0135)
+  [combined] mean=0.7867 +/- 0.0507
+== final (winners + TTA + tracking + ensemble) ==
+  [final] mean=0.9373 +/- 0.0294
 
-   ```bash
-   uv sync --extra train
-   uv run python -m vision.sweep --config configs/base.yaml
-   ```
+done -> runs/smoke/results.csv
+```
 
-   Read `results.csv` when it returns. See `configs/base.yaml` for the full lever list.
+Each line is a cross-validated Macro AP-rIoU, mean and standard deviation over
+folds. [`docs/sweep.md`](docs/sweep.md) explains the stages and the
+`results.csv` columns.
 
-## Sweep stages
+## Features
 
-The sweep runs `baseline`, then single-variable `ablations`, then `combine`,
-then `final`. Ablations warm-start from the baseline. `combine` keeps only the
-ablations that beat the baseline by the configured std margin. `final` layers on
-the late inference levers: TTA, tracking, and rotated-WBF ensemble.
+- **Local metric.** Macro AP-rIoU@[0.50:0.80] over 9 classes and 7 rotated-IoU
+  thresholds ([`docs/metric.md`](docs/metric.md)).
+- **Clip-grouped folds.** Frames from one clip never straddle training and
+  validation folds.
+- **Sweep.** Baseline, single-variable ablations, a combination of the winners,
+  and a final run with test-time levers. Each run appends a row to `results.csv`
+  unless the same experiment and config are already in it.
+- **Long-tail and small-object levers.** Repeat-factor sampling, mixup,
+  copy-paste, SAHI tiled inference, test-time augmentation, tracking, and a
+  multi-seed rotated box-fusion ensemble.
+- **Two backends.** YOLO26-OBB through Ultralytics for real runs; a
+  deterministic dummy backend for CPU runs.
+- **Format converters.** Competition text cells, YOLO-OBB labels, and
+  X-AnyLabeling JSON ([`docs/formats.md`](docs/formats.md),
+  [`docs/labeling.md`](docs/labeling.md)).
+- **Data inspection and angle calibration.** Class counts, suggested settings,
+  and box overlays for checking the angle convention
+  ([`docs/real-data.md`](docs/real-data.md)).
 
-Every run appends one row to `results.csv` (per-fold scores, mean/std, per-class
-AP, git SHA). Completed `(name, config_hash)` pairs are skipped, so an
-interrupted sweep resumes where it left off.
+## Documentation
 
-## Box representations
-
-The code moves between three box representations:
-
-1. Competition text cells: `score cls cx cy w h angle;...` (predictions) or
-   `cls cx cy w h angle;...` (ground truth).
-2. Internal IR: a mapping from `frame_id` to an `np.ndarray` of boxes.
-3. YOLO-OBB labels: normalized corner coordinates with zero-based class
-   indices.
-
-Competition class ids are `1..9`; YOLO class indices are `0..8`.
-
-## Labeling loop
-
-`vision.labeling` provides X-AnyLabeling converters only (not a live tool
-integration). The intended loop: pseudo-label external images, review the
-low-confidence frames in X-AnyLabeling, then import the corrected JSON back into
-the project IR.
+The manual starts at [`docs/readme.md`](docs/readme.md). The module map is in
+[`architecture.md`](architecture.md). To work on the code, read
+[`contributing.md`](contributing.md).
