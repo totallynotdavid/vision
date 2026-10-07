@@ -158,10 +158,11 @@ def run_cv(name, cfg, gts, folds, img_wh, work_dir: Path, warm_ckpts=None) -> di
         ckpts.append((fold["fold"], primary_ckpt))
 
     scores = np.array(fold_scores, dtype=np.float64)
+    scored = scores[~np.isnan(scores)]
     return {
         "name": name,
-        "mean": float(np.nanmean(scores)),
-        "std": float(np.nanstd(scores)),
+        "mean": float(scored.mean()) if scored.size else float("nan"),
+        "std": float(scored.std()) if scored.size else float("nan"),
         "fold_scores": [float(s) for s in scores],
         "per_class": _aggregate_per_class(per_class_list),
         "ckpts": dict(ckpts),
@@ -242,18 +243,69 @@ def _run_ablations(
     return results
 
 
+def _check_margin(margin_std: float) -> None:
+    if not (np.isfinite(margin_std) and margin_std >= 0):
+        raise ValueError(
+            f"sweep.win_margin_std must be finite and >= 0, got {margin_std}"
+        )
+
+
+def ablation_wins(
+    mean: float, baseline_mean: float, baseline_std: float, margin_std: float
+) -> bool:
+    """Apply the ablation win rule using baseline standard deviations.
+
+    The gain must be strictly positive, so a tie never wins, even at margin 0.
+    A zero baseline standard deviation makes the threshold zero, so any strict
+    gain wins. A NaN or infinite input never wins.
+    """
+    _check_margin(margin_std)
+    if not all(np.isfinite([mean, baseline_mean, baseline_std])):
+        return False
+    gain = mean - baseline_mean
+    return bool(gain > 0 and gain >= margin_std * baseline_std)
+
+
+def merge_overrides(groups: dict[str, list[str]]) -> list[str]:
+    """Validate and merge overrides in source order.
+
+    An identical `key=value` repeated by several sources appears once. A key
+    that two sources set to different values raises `ValueError`. Each source
+    was only validated on its own.
+    """
+    owner: dict[str, tuple[str, str]] = {}
+    merged = []
+    for source, overrides in groups.items():
+        for item in overrides:
+            key, _, value = item.partition("=")
+            if key in owner:
+                first, first_value = owner[key]
+                if first_value != value:
+                    raise ValueError(
+                        f"overrides conflict on {key!r}: {first} sets "
+                        f"{first_value!r}, {source} sets {value!r}"
+                    )
+                continue
+            owner[key] = (source, value)
+            merged.append(item)
+    return merged
+
+
 def _winner_overrides(cfg, baseline_res, ablation_results):
     print("== combine winners ==")
-    winners = []
+    winners = {}
     margin = float(cfg.sweep.win_margin_std)
+    _check_margin(margin)
     for name, res in ablation_results.items():
-        gain = res["mean"] - baseline_res["mean"]
-        if gain > 0 and gain >= margin * max(baseline_res["std"], 1e-9):
-            winners.extend(list(cfg.sweep.ablations[name]))
+        if ablation_wins(
+            res["mean"], baseline_res["mean"], baseline_res["std"], margin
+        ):
+            gain = res["mean"] - baseline_res["mean"]
+            winners[f"ablation {name}"] = list(cfg.sweep.ablations[name])
             print(f"  winner: {name} (+{gain:.4f})")
     if not winners:
         print("  no ablation cleared the margin")
-    return winners
+    return merge_overrides(winners)
 
 
 def run_sweep(config) -> None:
@@ -290,11 +342,16 @@ def run_sweep(config) -> None:
 
     if "final" in stages and baseline_res:
         print("== final (winners + TTA + tracking + ensemble) ==")
-        final_over = list(winners) + [
-            "tta.enabled=true",
-            "tracking.enabled=true",
-            "ensemble.enabled=true",
-        ]
+        final_over = merge_overrides(
+            {
+                "the winners": winners,
+                "the final stage": [
+                    "tta.enabled=true",
+                    "tracking.enabled=true",
+                    "ensemble.enabled=true",
+                ],
+            }
+        )
         c = OmegaConf.merge(cfg, OmegaConf.from_dotlist(final_over))
         _maybe_run("final", c, gts, folds, img_wh, work_dir, results_csv, sha, done)
 
