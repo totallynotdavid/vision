@@ -10,7 +10,7 @@ dependencies = [
     "shapely>=2.2.0,<3",           # Rotated IoU geometry.
     "opencv-python-headless>=5.0.0.93", # OBB conversion, drawing, image IO.
     "pandas>=3.0.6",              # CSV inputs and run logs.
-    "omegaconf>=2.3.1",           # Dotlist overrides and config composition.
+    "omegaconf>=2.4.0",           # Dotlist overrides and config composition.
     "scipy>=1.18.1",              # Hungarian matching for tracking.
     "tqdm>=4.70.1",
 ]
