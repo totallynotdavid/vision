@@ -6,11 +6,11 @@ readme = "readme.md"
 requires-python = ">=3.14"
 
 dependencies = [
-    "numpy>=2.5.3,<3",
+    "numpy>=2.5.4,<3",
     "shapely>=2.2.0,<3",           # Rotated IoU geometry.
     "opencv-python-headless>=5.0.0.93", # OBB conversion, drawing, image IO.
     "pandas>=3.0.6",              # CSV inputs and run logs.
-    "omegaconf>=2.3.1",           # Dotlist overrides and config composition.
+    "omegaconf>=2.4.0",           # Dotlist overrides and config composition.
     "scipy>=1.18.1",              # Hungarian matching for tracking.
     "tqdm>=4.70.1",
 ]
@@ -18,13 +18,13 @@ dependencies = [
 [project.optional-dependencies]
 # Training extras pull torch and expect a GPU.
 train = [
-    "ultralytics>=8.4.174",       # YOLO26-OBB backend.
+    "ultralytics>=8.4.177",       # YOLO26-OBB backend.
     "sahi>=0.12.8",               # Tiled inference.
     "lap>=0.5.13",                # Optional fast assignment backend.
 ]
 dev = [
     "pytest>=9.1.1",
-    "ruff>=0.16.10",
+    "ruff>=0.17.0",
 ]
 
 [build-system]
