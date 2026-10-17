@@ -73,6 +73,8 @@ def render_calibration(
             p = images_dir / f"{fid}{ext}"
             if p.exists():
                 img = cv2.imread(str(p))
+                if img is None:
+                    raise ValueError(f"cannot read image: {p}")
                 cv2.imwrite(
                     str(out_dir / f"{fid}.jpg"), draw_obbs(img, gts[fid], conv=conv)
                 )

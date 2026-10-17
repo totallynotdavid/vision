@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -12,14 +13,16 @@ class Backend:
 
     def train(
         self,
-        dataset_yaml: str,
-        cfg: dict,
+        dataset_yaml: str | None,
+        cfg: Any,
         work_dir: Path,
         warm_start: str | None = None,
     ) -> str:
         raise NotImplementedError
 
-    def predict(self, frames: list[tuple[str, str]], cfg: dict, ckpt: str) -> dict:
+    def predict(
+        self, frames: list[tuple[str, str]], cfg: Any, ckpt: str
+    ) -> dict[str, np.ndarray]:
         raise NotImplementedError
 
 
@@ -29,10 +32,18 @@ class DummyOBB(Backend):
     def __init__(self, gts: dict[str, np.ndarray]):
         self.gts = gts
 
-    def train(self, dataset_yaml, cfg, work_dir, warm_start=None):
+    def train(
+        self,
+        dataset_yaml: str | None,
+        cfg: Any,
+        work_dir: Path,
+        warm_start: str | None = None,
+    ) -> str:
         return f"dummy::{cfg.get('model', {}).get('size', 'n')}"
 
-    def predict(self, frames, cfg, ckpt):
+    def predict(
+        self, frames: list[tuple[str, str]], cfg: Any, ckpt: str
+    ) -> dict[str, np.ndarray]:
         mcfg = cfg.get("model", {})
         seed = int(mcfg.get("seed", 0)) + (
             1 if cfg.get("sahi", {}).get("enabled") else 0
@@ -40,7 +51,7 @@ class DummyOBB(Backend):
         rng = np.random.default_rng(seed)
         noise = float(mcfg.get("dummy_noise", 3.0))
         recall = float(mcfg.get("dummy_recall", 0.8))
-        out = {}
+        out: dict[str, np.ndarray] = {}
         for fid, _path in frames:
             gt = np.asarray(self.gts.get(fid, np.zeros((0, 6)))).reshape(-1, 6)
             rows = []
@@ -65,8 +76,17 @@ class DummyOBB(Backend):
 class UltralyticsOBB(Backend):
     """Real YOLO26-OBB. Heavy deps imported lazily so importing this module is cheap."""
 
-    def train(self, dataset_yaml, cfg, work_dir, warm_start=None):
+    def train(
+        self,
+        dataset_yaml: str | None,
+        cfg: Any,
+        work_dir: Path,
+        warm_start: str | None = None,
+    ) -> str:
         from ultralytics import YOLO
+
+        if dataset_yaml is None:
+            raise ValueError("UltralyticsOBB needs a dataset yaml")
 
         mcfg = cfg.get("model", {})
         size = mcfg.get("size", "n")
@@ -91,7 +111,9 @@ class UltralyticsOBB(Backend):
         )
         return str(Path(results.save_dir) / "weights" / "best.pt")
 
-    def predict(self, frames, cfg, ckpt):
+    def predict(
+        self, frames: list[tuple[str, str]], cfg: Any, ckpt: str
+    ) -> dict[str, np.ndarray]:
         from .infer import predict_plain, predict_sahi
 
         if cfg.get("sahi", {}).get("enabled"):
@@ -99,7 +121,7 @@ class UltralyticsOBB(Backend):
         return predict_plain(ckpt, frames, cfg)
 
 
-def make_backend(cfg: dict, gts: dict | None = None) -> Backend:
+def make_backend(cfg: Any, gts: dict[str, np.ndarray] | None = None) -> Backend:
     name = cfg.get("model", {}).get("backend", "ultralytics")
     if name == "dummy":
         assert gts is not None, "DummyOBB needs gts"

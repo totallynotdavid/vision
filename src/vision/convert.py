@@ -68,7 +68,7 @@ def load_gts(
 
 def load_preds(
     csv_path: str | Path, id_col: str = "Id", target_col: str = "Target"
-) -> dict:
+) -> dict[str, np.ndarray]:
     df = pd.read_csv(csv_path)
     return {
         str(r[id_col]): parse_pred_cell(str(r[target_col])) for _, r in df.iterrows()

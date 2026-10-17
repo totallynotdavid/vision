@@ -31,7 +31,7 @@ def wbf_frame(
     """Fuse prediction sets for one frame."""
     weights = weights or [1.0] * len(preds_list)
     rows = []
-    for arr, wt in zip(preds_list, weights):
+    for arr, wt in zip(preds_list, weights, strict=True):
         a = np.asarray(arr, dtype=np.float64).reshape(-1, 7).copy()
         a[:, 0] *= wt
         rows.append(a)
@@ -58,14 +58,12 @@ def wbf_frame(
 
 
 def wbf(
-    pred_dicts: list[dict],
+    pred_dicts: list[dict[str, np.ndarray]],
     weights: list[float] | None = None,
     iou_thr: float = 0.55,
     conv: AngleConvention = DEFAULT_CONVENTION,
-) -> dict:
-    frame_ids = (
-        set().union(*[set(d.keys()) for d in pred_dicts]) if pred_dicts else set()
-    )
+) -> dict[str, np.ndarray]:
+    frame_ids: set[str] = set().union(*[set(d.keys()) for d in pred_dicts])
     return {
         fid: wbf_frame(
             [d.get(fid, np.zeros((0, 7))) for d in pred_dicts], weights, iou_thr, conv

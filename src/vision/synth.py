@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -31,7 +32,7 @@ def make_synthetic(
     img_size: tuple[int, int] = (640, 384),
     objs_per_frame: int = 6,
     seed: int = 0,
-) -> dict:
+) -> dict[str, Any]:
     """Write images and a train.csv-like file using the default angle convention."""
     import cv2
 
@@ -54,9 +55,9 @@ def make_synthetic(
             img = np.full((H, W, 3), 40, dtype=np.uint8)
             gt = []
             for i in range(n_obj):
-                w, h = _SIZE[int(cls[i])]
-                w *= rng.uniform(0.85, 1.15)
-                h *= rng.uniform(0.85, 1.15)
+                base_w, base_h = _SIZE[int(cls[i])]
+                w = base_w * rng.uniform(0.85, 1.15)
+                h = base_h * rng.uniform(0.85, 1.15)
                 pcx = float(np.clip(cx[i] + vel[i, 0] * fr, 0, W))
                 pcy = float(np.clip(cy[i] + vel[i, 1] * fr, 0, H))
                 pang = float((ang[i] + fr * 2) % 180)

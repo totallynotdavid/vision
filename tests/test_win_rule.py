@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import csv
+from pathlib import Path
+from typing import Any
 
 import pytest
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from vision.sweep import _winner_overrides, ablation_wins, merge_overrides, run_sweep
 from vision.synth import make_synthetic
@@ -15,27 +17,27 @@ INF = float("inf")
 
 
 @pytest.mark.parametrize("margin", [0.0, 1.0, 2.5])
-def test_tie_never_wins(margin):
+def test_tie_never_wins(margin: float) -> None:
     assert not ablation_wins(0.5, 0.5, 0.0, margin)
     assert not ablation_wins(0.5, 0.5, 0.1, margin)
 
 
 @pytest.mark.parametrize("margin", [0.0, 1.0, 100.0])
-def test_zero_baseline_std_lets_any_strict_gain_win(margin):
+def test_zero_baseline_std_lets_any_strict_gain_win(margin: float) -> None:
     assert ablation_wins(0.5 + 1e-12, 0.5, 0.0, margin)
 
 
-def test_zero_margin_needs_a_strict_gain_only():
+def test_zero_margin_needs_a_strict_gain_only() -> None:
     assert ablation_wins(0.51, 0.5, 0.2, 0.0)
     assert not ablation_wins(0.49, 0.5, 0.2, 0.0)
 
 
-def test_gain_exactly_at_the_margin_wins():
+def test_gain_exactly_at_the_margin_wins() -> None:
     assert ablation_wins(0.75, 0.5, 0.25, 1.0)
     assert not ablation_wins(0.7499, 0.5, 0.25, 1.0)
 
 
-def test_loss_never_wins():
+def test_loss_never_wins() -> None:
     assert not ablation_wins(0.4, 0.5, 0.0, 0.0)
 
 
@@ -50,18 +52,26 @@ def test_loss_never_wins():
     ],
 )
 @pytest.mark.parametrize("margin", [0.0, 1.0])
-def test_non_finite_input_never_wins(mean, baseline_mean, baseline_std, margin):
+def test_non_finite_input_never_wins(
+    mean: float, baseline_mean: float, baseline_std: float, margin: float
+) -> None:
     assert not ablation_wins(mean, baseline_mean, baseline_std, margin)
 
 
 @pytest.mark.parametrize("margin", [NAN, -1.0, INF])
-def test_invalid_margin_is_rejected(margin):
+def test_invalid_margin_is_rejected(margin: float) -> None:
     with pytest.raises(ValueError, match="win_margin_std"):
         ablation_wins(0.6, 0.5, 0.1, margin)
 
 
-def _cfg(margin):
-    return OmegaConf.create(
+def _create(tree: dict[str, Any]) -> DictConfig:
+    cfg = OmegaConf.create(tree)
+    assert isinstance(cfg, DictConfig)
+    return cfg
+
+
+def _cfg(margin: float) -> DictConfig:
+    return _create(
         {
             "sweep": {
                 "win_margin_std": margin,
@@ -71,7 +81,7 @@ def _cfg(margin):
     )
 
 
-def test_winner_overrides_collects_only_winners():
+def test_winner_overrides_collects_only_winners() -> None:
     baseline = {"mean": 0.5, "std": 0.0}
     ablations = {
         "a": {"mean": 0.6},
@@ -82,22 +92,23 @@ def test_winner_overrides_collects_only_winners():
     assert _winner_overrides(_cfg(1.0), baseline, ablations) == ["x.a=1"]
 
 
-def test_winner_overrides_rejects_invalid_margin_without_ablations():
+def test_winner_overrides_rejects_invalid_margin_without_ablations() -> None:
     with pytest.raises(ValueError, match="win_margin_std"):
         _winner_overrides(_cfg(-1.0), {"mean": 0.5, "std": 0.0}, {})
 
 
-def test_winner_overrides_with_nan_baseline_finds_none():
+def test_winner_overrides_with_nan_baseline_finds_none() -> None:
     baseline = {"mean": NAN, "std": NAN}
     ablations = {"a": {"mean": 0.6}}
     assert _winner_overrides(_cfg(0.0), baseline, ablations) == []
 
 
-def test_sweep_at_zero_margin_combines_only_strict_gains(tmp_path):
+def test_sweep_at_zero_margin_combines_only_strict_gains(tmp_path: Path) -> None:
     """The smoke config's dummy backend ignores `model.size`, so `size_s` ties."""
     synth = tmp_path / "synth"
     make_synthetic(synth, n_clips=4, frames_per_clip=6, seed=0)
     cfg = OmegaConf.load("configs/smoke.yaml")
+    assert isinstance(cfg, DictConfig)
     cfg.data.raw_dir = str(synth)
     cfg.cv.folds_file = str(tmp_path / "folds.json")
     cfg.sweep.results_csv = str(tmp_path / "results.csv")
@@ -118,20 +129,20 @@ def test_sweep_at_zero_margin_combines_only_strict_gains(tmp_path):
     assert ("combined" in means) == bool(expected)
 
 
-def test_merge_overrides_keeps_order_and_dedupes_identical_items():
+def test_merge_overrides_keeps_order_and_dedupes_identical_items() -> None:
     merged = merge_overrides(
         {"a": ["x.a=1", "x.b=2"], "b": ["x.b=2", "x.c=3"], "c": []}
     )
     assert merged == ["x.a=1", "x.b=2", "x.c=3"]
 
 
-def test_merge_overrides_rejects_a_key_set_to_two_values():
+def test_merge_overrides_rejects_a_key_set_to_two_values() -> None:
     with pytest.raises(ValueError, match=r"'x.b'.*a sets '1'.*b sets '2'"):
         merge_overrides({"a": ["x.b=1"], "b": ["x.b=2"]})
 
 
-def test_winners_that_conflict_raise_at_combine_time():
-    cfg = OmegaConf.create(
+def test_winners_that_conflict_raise_at_combine_time() -> None:
+    cfg = _create(
         {
             "sweep": {
                 "win_margin_std": 0.0,
@@ -141,17 +152,18 @@ def test_winners_that_conflict_raise_at_combine_time():
     )
     baseline = {"mean": 0.5, "std": 0.0}
     both = {"a": {"mean": 0.6}, "b": {"mean": 0.7}, "c": {"mean": 0.6}}
-    with pytest.raises(ValueError, match="ablation a.*ablation b"):
+    with pytest.raises(ValueError, match=r"ablation a.*ablation b"):
         _winner_overrides(cfg, baseline, both)
     # A conflicting ablation that does not win is not a conflict.
     one = {"a": {"mean": 0.6}, "b": {"mean": 0.5}, "c": {"mean": 0.6}}
     assert _winner_overrides(cfg, baseline, one) == ["m.size=s", "m.k=1"]
 
 
-def _smoke_cfg(tmp_path):
+def _smoke_cfg(tmp_path: Path) -> DictConfig:
     synth = tmp_path / "synth"
     make_synthetic(synth, n_clips=4, frames_per_clip=6, seed=0)
     cfg = OmegaConf.load("configs/smoke.yaml")
+    assert isinstance(cfg, DictConfig)
     cfg.data.raw_dir = str(synth)
     cfg.cv.folds_file = str(tmp_path / "folds.json")
     cfg.sweep.results_csv = str(tmp_path / "results.csv")
@@ -162,17 +174,17 @@ def _smoke_cfg(tmp_path):
     return cfg
 
 
-def test_sweep_stops_when_two_winners_set_one_key_differently(tmp_path):
+def test_sweep_stops_when_two_winners_set_one_key_differently(tmp_path: Path) -> None:
     cfg = _smoke_cfg(tmp_path)
     cfg.sweep.ablations = {
         "recall_hi": ["model.dummy_recall=0.95"],
         "recall_max": ["model.dummy_recall=0.99"],
     }
-    with pytest.raises(ValueError, match="model.dummy_recall"):
+    with pytest.raises(ValueError, match=r"model\.dummy_recall"):
         run_sweep(cfg)
 
 
-def test_sweep_combines_winners_that_agree_on_a_key(tmp_path):
+def test_sweep_combines_winners_that_agree_on_a_key(tmp_path: Path) -> None:
     cfg = _smoke_cfg(tmp_path)
     cfg.sweep.ablations = {
         "recall_hi": ["model.dummy_recall=0.95"],

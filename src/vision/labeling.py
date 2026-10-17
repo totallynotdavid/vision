@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -43,7 +44,7 @@ def export_pseudolabels(
                     "flags": {},
                 }
             )
-        doc = {
+        doc: dict[str, Any] = {
             "version": "2.0",
             "flags": {},
             "shapes": shapes,
@@ -77,7 +78,7 @@ def import_corrections(
 def rank_by_uncertainty(preds: dict[str, np.ndarray]) -> list[str]:
     """Review empty and low-confidence frames before confident detections."""
 
-    def key(item):
+    def key(item: tuple[str, np.ndarray]) -> tuple[float, int]:
         arr = np.asarray(item[1]).reshape(-1, 7)
         if len(arr) == 0:
             return (0.0, 0)

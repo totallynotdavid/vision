@@ -6,8 +6,11 @@ import json
 import re
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 DEFAULT_CLIP_REGEX = r"^(.*)_\d+$"
+
+Fold = dict[str, Any]
 
 
 def clip_of(frame_id: str, regex: str = DEFAULT_CLIP_REGEX) -> str:
@@ -18,7 +21,7 @@ def clip_of(frame_id: str, regex: str = DEFAULT_CLIP_REGEX) -> str:
 
 def make_folds(
     frame_ids: list[str], k: int = 5, seed: int = 0, regex: str = DEFAULT_CLIP_REGEX
-) -> list[dict]:
+) -> list[Fold]:
     """Balance frame counts without splitting any clip across folds."""
     by_clip: dict[str, list[str]] = defaultdict(list)
     for fid in frame_ids:
@@ -54,12 +57,13 @@ def make_folds(
     return folds
 
 
-def save_folds(folds: list[dict], path: str | Path) -> Path:
+def save_folds(folds: list[Fold], path: str | Path) -> Path:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(folds, indent=2))
     return path
 
 
-def load_folds(path: str | Path) -> list[dict]:
-    return json.loads(Path(path).read_text())
+def load_folds(path: str | Path) -> list[Fold]:
+    folds: list[Fold] = json.loads(Path(path).read_text())
+    return folds

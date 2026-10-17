@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from vision.convert import format_pred_cell, parse_gt_cell, parse_pred_cell
 from vision.geometry import corners_to_obb, obb_to_corners, rotated_iou
@@ -20,14 +21,14 @@ from vision.sweep import git_sha
 from vision.synth import make_synthetic
 
 
-def test_rotated_iou_identity_and_disjoint():
+def test_rotated_iou_identity_and_disjoint() -> None:
     box = (100, 100, 40, 20, 30)
     assert rotated_iou(box, box) == pytest.approx(1.0, abs=1e-6)
     far = (1000, 1000, 40, 20, 30)
     assert rotated_iou(box, far) == 0.0
 
 
-def test_corner_roundtrip():
+def test_corner_roundtrip() -> None:
     box = (100.0, 80.0, 60.0, 30.0, 25.0)
     corners = obb_to_corners(*box)
     cx, cy, w, h, _ang = corners_to_obb(corners)
@@ -35,7 +36,7 @@ def test_corner_roundtrip():
     assert sorted((w, h)) == pytest.approx(sorted((60.0, 30.0)), abs=1e-3)
 
 
-def test_cell_roundtrip():
+def test_cell_roundtrip() -> None:
     assert parse_gt_cell("none").shape == (0, 6)
     assert parse_pred_cell("").shape == (0, 7)
     cell = format_pred_cell(np.array([[0.9, 1, 10, 20, 30, 40, 15.0]]))
@@ -44,7 +45,7 @@ def test_cell_roundtrip():
     assert format_pred_cell(np.array([[0.9, 1, 10, 20, 0, 40, 15.0]])) == "none"
 
 
-def test_metric_perfect_and_partial():
+def test_metric_perfect_and_partial() -> None:
     gts = {"f1": np.array([[1, 100, 100, 40, 20, 0.0], [9, 200, 150, 30, 15, 10.0]])}
     perfect = {
         "f1": np.array(
@@ -56,15 +57,15 @@ def test_metric_perfect_and_partial():
     assert evaluate(empty, gts)["score"] == 0.0
 
 
-def test_git_sha_falls_back_on_os_error(monkeypatch):
-    def raise_permission_error(*args, **kwargs):
+def test_git_sha_falls_back_on_os_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def raise_permission_error(*args: Any, **kwargs: Any) -> None:
         raise PermissionError("git binary not executable")
 
     monkeypatch.setattr("subprocess.check_output", raise_permission_error)
     assert git_sha() == "nogit"
 
 
-def test_clip_grouped_split_has_no_leak():
+def test_clip_grouped_split_has_no_leak() -> None:
     frames = [f"clip{c:02d}_{f:03d}" for c in range(6) for f in range(10)]
     folds = make_folds(frames, k=3, seed=0)
     for fold in folds:
@@ -73,12 +74,13 @@ def test_clip_grouped_split_has_no_leak():
         assert train_clips.isdisjoint(val_clips), "clip leaked across split!"
 
 
-def test_full_sweep_end_to_end(tmp_path):
+def test_full_sweep_end_to_end(tmp_path: Path) -> None:
     synth = tmp_path / "synth"
     info = make_synthetic(synth, n_clips=4, frames_per_clip=6, seed=0)
     assert info["csv"].exists()
 
     cfg = OmegaConf.load("configs/smoke.yaml")
+    assert isinstance(cfg, DictConfig)
     cfg.data.raw_dir = str(synth)
     cfg.cv.folds_file = str(tmp_path / "folds.json")
     cfg.sweep.results_csv = str(tmp_path / "results.csv")

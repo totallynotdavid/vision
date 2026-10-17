@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import csv as _csv
 import hashlib
 import json
@@ -10,9 +11,10 @@ import sys
 import time
 from collections import defaultdict
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 from . import CLASS_IDS
 from .backends import make_backend
@@ -20,8 +22,11 @@ from .convert import gt_to_yolo_lines, load_gts, write_dataset_yaml
 from .data import image_size, repeat_factors
 from .ensemble import wbf
 from .metric import evaluate
-from .splits import clip_of, load_folds, make_folds, save_folds
+from .splits import Fold, clip_of, load_folds, make_folds, save_folds
 from .track import track_all
+
+Gts = dict[str, np.ndarray]
+CVResult = dict[str, Any]
 
 
 def git_sha() -> str:
@@ -35,21 +40,21 @@ def git_sha() -> str:
         return "nogit"
 
 
-def config_hash(cfg) -> str:
+def config_hash(cfg: DictConfig) -> str:
     return hashlib.sha1(OmegaConf.to_yaml(cfg, resolve=True).encode()).hexdigest()[:10]
 
 
 def load_done(csv_path: Path) -> set[tuple[str, str]]:
     if not csv_path.exists():
         return set()
-    done = set()
+    done: set[tuple[str, str]] = set()
     with open(csv_path) as f:
         for row in _csv.DictReader(f):
             done.add((row["exp"], row["config_hash"]))
     return done
 
 
-def append_result(csv_path: Path, row: dict) -> None:
+def append_result(csv_path: Path, row: dict[str, Any]) -> None:
     csv_path.parent.mkdir(parents=True, exist_ok=True)
     exists = csv_path.exists()
     with open(csv_path, "a", newline="") as f:
@@ -59,11 +64,17 @@ def append_result(csv_path: Path, row: dict) -> None:
         w.writerow(row)
 
 
-def _frame_path(cfg, fid: str) -> str:
+def _frame_path(cfg: DictConfig, fid: str) -> str:
     return str(Path(cfg.data.raw_dir) / cfg.data.images / f"{fid}{cfg.data.ext}")
 
 
-def prepare_fold_dataset(cfg, gts, fold, img_wh, work_dir: Path) -> str:
+def prepare_fold_dataset(
+    cfg: DictConfig,
+    gts: Gts,
+    fold: Fold,
+    img_wh: tuple[int, int],
+    work_dir: Path,
+) -> str:
     """Real backends train on per-fold YOLO datasets with optional RFS repeats."""
     import os
 
@@ -86,24 +97,22 @@ def prepare_fold_dataset(cfg, gts, fold, img_wh, work_dir: Path) -> str:
                 src = Path(_frame_path(cfg, fid)).resolve()
                 dst = img_out / f"{tag}{cfg.data.ext}"
                 if not dst.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         os.symlink(src, dst)
-                    except OSError:
-                        pass
                 (lbl_out / f"{tag}.txt").write_text("\n".join(lines))
 
     return str(write_dataset_yaml(base, "train/images", "val/images"))
 
 
-def _clips_of(frame_ids, regex):
-    clips = defaultdict(list)
+def _clips_of(frame_ids: list[str], regex: str) -> dict[str, list[str]]:
+    clips: defaultdict[str, list[str]] = defaultdict(list)
     for fid in frame_ids:
         clips[clip_of(fid, regex)].append(fid)
     return {c: sorted(fs) for c, fs in clips.items()}
 
 
-def _aggregate_per_class(per_class_list):
-    agg = {}
+def _aggregate_per_class(per_class_list: list[dict[int, float]]) -> dict[int, float]:
+    agg: dict[int, float] = {}
     for c in CLASS_IDS:
         vals = [pc[c] for pc in per_class_list if not np.isnan(pc.get(c, np.nan))]
         agg[c] = float(np.mean(vals)) if vals else float("nan")
@@ -111,13 +120,20 @@ def _aggregate_per_class(per_class_list):
 
 
 def _fold_predictions(
-    cfg, cfg_d, gts, fold, img_wh, fwork: Path, warm_ckpts=None
-) -> tuple[dict, str]:
+    cfg: DictConfig,
+    cfg_d: dict[str, Any],
+    gts: Gts,
+    fold: Fold,
+    img_wh: tuple[int, int],
+    fwork: Path,
+    warm_ckpts: dict[int, str] | None = None,
+) -> tuple[dict[str, np.ndarray], str]:
     is_dummy = cfg.model.backend == "dummy"
     yaml = None if is_dummy else prepare_fold_dataset(cfg, gts, fold, img_wh, fwork)
     val_frames = [(fid, _frame_path(cfg, fid)) for fid in fold["val"]]
     seeds = list(cfg.ensemble.seeds) if cfg.ensemble.enabled else [cfg.model.seed]
-    seed_preds, primary_ckpt = [], None
+    seed_preds: list[dict[str, np.ndarray]] = []
+    primary_ckpt = ""
 
     for si, seed in enumerate(seeds):
         scfg = json.loads(json.dumps(cfg_d))
@@ -137,9 +153,19 @@ def _fold_predictions(
     return preds, primary_ckpt
 
 
-def run_cv(name, cfg, gts, folds, img_wh, work_dir: Path, warm_ckpts=None) -> dict:
-    fold_scores, per_class_list, ckpts = [], [], []
-    cfg_d = OmegaConf.to_container(cfg, resolve=True)
+def run_cv(
+    name: str,
+    cfg: DictConfig,
+    gts: Gts,
+    folds: list[Fold],
+    img_wh: tuple[int, int],
+    work_dir: Path,
+    warm_ckpts: dict[int, str] | None = None,
+) -> CVResult:
+    fold_scores: list[float] = []
+    per_class_list: list[dict[int, float]] = []
+    ckpts: list[tuple[int, str]] = []
+    cfg_d = cast(dict[str, Any], OmegaConf.to_container(cfg, resolve=True))
 
     for fold in folds:
         fwork = work_dir / name / f"fold{fold['fold']}"
@@ -170,7 +196,7 @@ def run_cv(name, cfg, gts, folds, img_wh, work_dir: Path, warm_ckpts=None) -> di
     }
 
 
-def _log(csv_path: Path, res: dict, sha: str) -> None:
+def _log(csv_path: Path, res: CVResult, sha: str) -> None:
     row = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "exp": res["name"],
@@ -185,7 +211,9 @@ def _log(csv_path: Path, res: dict, sha: str) -> None:
     print(f"  [{res['name']}] mean={res['mean']:.4f} +/- {res['std']:.4f}")
 
 
-def _load_sweep_inputs(cfg):
+def _load_sweep_inputs(
+    cfg: DictConfig,
+) -> tuple[Gts, list[Fold], tuple[int, int]]:
     gts = load_gts(
         Path(cfg.data.raw_dir) / cfg.data.csv, cfg.data.id_col, cfg.data.target_col
     )
@@ -204,7 +232,24 @@ def _load_sweep_inputs(cfg):
     return gts, folds, img_wh
 
 
-def _maybe_run(name, cfg, gts, folds, img_wh, work_dir, results_csv, sha, done):
+def _merge(cfg: DictConfig, dotlist: list[str]) -> DictConfig:
+    merged = OmegaConf.merge(cfg, OmegaConf.from_dotlist(dotlist))
+    if not isinstance(merged, DictConfig):
+        raise TypeError("sweep config must be a mapping")
+    return merged
+
+
+def _maybe_run(
+    name: str,
+    cfg: DictConfig,
+    gts: Gts,
+    folds: list[Fold],
+    img_wh: tuple[int, int],
+    work_dir: Path,
+    results_csv: Path,
+    sha: str,
+    done: set[tuple[str, str]],
+) -> CVResult | None:
     if (name, config_hash(cfg)) in done:
         print(f"  [{name}] skip (already done)")
         return None
@@ -213,7 +258,16 @@ def _maybe_run(name, cfg, gts, folds, img_wh, work_dir, results_csv, sha, done):
     return res
 
 
-def _run_baseline(cfg, gts, folds, img_wh, work_dir, results_csv, sha, done):
+def _run_baseline(
+    cfg: DictConfig,
+    gts: Gts,
+    folds: list[Fold],
+    img_wh: tuple[int, int],
+    work_dir: Path,
+    results_csv: Path,
+    sha: str,
+    done: set[tuple[str, str]],
+) -> CVResult:
     print("== baseline ==")
     res = run_cv("baseline", cfg, gts, folds, img_wh, work_dir)
     if ("baseline", res["config_hash"]) not in done:
@@ -224,13 +278,21 @@ def _run_baseline(cfg, gts, folds, img_wh, work_dir, results_csv, sha, done):
 
 
 def _run_ablations(
-    cfg, baseline_res, gts, folds, img_wh, work_dir, results_csv, sha, done
-):
+    cfg: DictConfig,
+    baseline_res: CVResult | None,
+    gts: Gts,
+    folds: list[Fold],
+    img_wh: tuple[int, int],
+    work_dir: Path,
+    results_csv: Path,
+    sha: str,
+    done: set[tuple[str, str]],
+) -> dict[str, CVResult]:
     print("== ablations (single-variable, warm-started from baseline) ==")
-    results = {}
+    results: dict[str, CVResult] = {}
     warm = baseline_res["ckpts"] if baseline_res else None
     for name, overrides in cfg.sweep.ablations.items():
-        ablation_cfg = OmegaConf.merge(cfg, OmegaConf.from_dotlist(list(overrides)))
+        ablation_cfg = _merge(cfg, list(overrides))
         exp_name = f"abl_{name}"
         if (exp_name, config_hash(ablation_cfg)) in done:
             print(f"  [{exp_name}] skip (already done)")
@@ -274,7 +336,7 @@ def merge_overrides(groups: dict[str, list[str]]) -> list[str]:
     was only validated on its own.
     """
     owner: dict[str, tuple[str, str]] = {}
-    merged = []
+    merged: list[str] = []
     for source, overrides in groups.items():
         for item in overrides:
             key, _, value = item.partition("=")
@@ -291,9 +353,13 @@ def merge_overrides(groups: dict[str, list[str]]) -> list[str]:
     return merged
 
 
-def _winner_overrides(cfg, baseline_res, ablation_results):
+def _winner_overrides(
+    cfg: DictConfig,
+    baseline_res: CVResult,
+    ablation_results: dict[str, CVResult],
+) -> list[str]:
     print("== combine winners ==")
-    winners = {}
+    winners: dict[str, list[str]] = {}
     margin = float(cfg.sweep.win_margin_std)
     _check_margin(margin)
     for name, res in ablation_results.items():
@@ -308,8 +374,10 @@ def _winner_overrides(cfg, baseline_res, ablation_results):
     return merge_overrides(winners)
 
 
-def run_sweep(config) -> None:
-    cfg = OmegaConf.load(config) if isinstance(config, (str, Path)) else config
+def run_sweep(config: str | Path | DictConfig) -> None:
+    cfg = OmegaConf.load(config) if isinstance(config, str | Path) else config
+    if not isinstance(cfg, DictConfig):
+        raise TypeError("sweep config must be a mapping")
     sha = git_sha()
     results_csv = Path(cfg.sweep.results_csv)
     work_dir = Path(cfg.sweep.work_dir)
@@ -318,8 +386,8 @@ def run_sweep(config) -> None:
     gts, folds, img_wh = _load_sweep_inputs(cfg)
 
     stages = list(cfg.sweep.stages)
-    baseline_res = None
-    ablation_results = {}
+    baseline_res: CVResult | None = None
+    ablation_results: dict[str, CVResult] = {}
 
     if "baseline" in stages:
         baseline_res = _run_baseline(
@@ -331,11 +399,11 @@ def run_sweep(config) -> None:
             cfg, baseline_res, gts, folds, img_wh, work_dir, results_csv, sha, done
         )
 
-    winners = []
+    winners: list[str] = []
     if "combine" in stages and baseline_res:
         winners = _winner_overrides(cfg, baseline_res, ablation_results)
         if winners:
-            c = OmegaConf.merge(cfg, OmegaConf.from_dotlist(winners))
+            c = _merge(cfg, winners)
             _maybe_run(
                 "combined", c, gts, folds, img_wh, work_dir, results_csv, sha, done
             )
@@ -352,7 +420,7 @@ def run_sweep(config) -> None:
                 ],
             }
         )
-        c = OmegaConf.merge(cfg, OmegaConf.from_dotlist(final_over))
+        c = _merge(cfg, final_over)
         _maybe_run("final", c, gts, folds, img_wh, work_dir, results_csv, sha, done)
 
     print(f"\ndone -> {results_csv}")

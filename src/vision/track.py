@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from itertools import pairwise
+from typing import Any
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
@@ -25,7 +26,7 @@ def track_clip(
     conv: AngleConvention = DEFAULT_CONVENTION,
 ) -> dict[str, np.ndarray]:
     """Original detections are preserved. Interpolated boxes are appended."""
-    tracks: list[dict] = []
+    tracks: list[dict[str, Any]] = []
     active: list[int] = []
 
     for fi, fid in enumerate(frame_order):
@@ -40,13 +41,13 @@ def track_clip(
             for r, tc in enumerate(prev_cls):
                 iou[r, dets[:, 1] != tc] = 0.0
             rows, cols = linear_sum_assignment(-iou)
-            for r, c in zip(rows, cols):
-                if iou[r, c] >= iou_thr:
-                    t = active[r]
-                    tracks[t]["frames"][fi] = dets[c]
-                    tracks[t]["last"] = dets[c]
+            for ri, m in zip(rows, cols, strict=True):
+                if iou[ri, m] >= iou_thr:
+                    t = active[ri]
+                    tracks[t]["frames"][fi] = dets[m]
+                    tracks[t]["last"] = dets[m]
                     new_active.append(t)
-                    matched_dets.add(c)
+                    matched_dets.add(int(m))
         for c in range(len(dets)):
             if c in matched_dets:
                 continue
@@ -79,7 +80,9 @@ def track_clip(
     return out
 
 
-def track_all(preds: dict, clips: dict[str, list[str]], cfg: dict) -> dict:
+def track_all(
+    preds: dict[str, np.ndarray], clips: dict[str, list[str]], cfg: Any
+) -> dict[str, np.ndarray]:
     """Tracking is isolated per ordered clip."""
     tcfg = cfg.get("tracking", {})
     out = dict(preds)

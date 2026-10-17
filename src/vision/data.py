@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -12,7 +13,7 @@ from .convert import load_gts
 
 
 def class_counts(gts: dict[str, np.ndarray]) -> dict[int, int]:
-    counts = defaultdict(int)
+    counts: defaultdict[int, int] = defaultdict(int)
     for arr in gts.values():
         for row in np.asarray(arr).reshape(-1, 6):
             counts[int(row[0])] += 1
@@ -50,16 +51,16 @@ def repeat_factors(gts: dict[str, np.ndarray], thr: float = 0.001) -> dict[str, 
     return out
 
 
-def angle_stats(gts: dict[str, np.ndarray]) -> dict:
+def angle_stats(gts: dict[str, np.ndarray]) -> dict[str, Any]:
     angs = [r[5] for arr in gts.values() for r in np.asarray(arr).reshape(-1, 6)]
     if not angs:
         return {}
-    angs = np.array(angs)
+    angs_arr = np.array(angs)
     return {
-        "min": float(angs.min()),
-        "max": float(angs.max()),
-        "mean": float(angs.mean()),
-        "n": len(angs),
+        "min": float(angs_arr.min()),
+        "max": float(angs_arr.max()),
+        "mean": float(angs_arr.mean()),
+        "n": len(angs_arr),
     }
 
 
@@ -86,7 +87,7 @@ def suggest_tile_size(img_wh: tuple[int, int] | None) -> int | None:
 
 def inspect(
     raw_dir: str | Path, csv_name: str = "train.csv", images_subdir: str = "images"
-) -> dict:
+) -> dict[str, Any]:
     raw_dir = Path(raw_dir)
     gts = load_gts(raw_dir / csv_name)
     counts = class_counts(gts)
@@ -102,7 +103,7 @@ def inspect(
     return report
 
 
-def _print_report(r: dict) -> None:
+def _print_report(r: dict[str, Any]) -> None:
     print(
         f"frames: {r['n_frames']}   image_size: {r['image_size']}   "
         f"suggested SAHI tile: {r['suggested_tile']}"

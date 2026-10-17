@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -32,9 +34,11 @@ def _ap_all_points(scores: np.ndarray, is_tp: np.ndarray, n_gt: int) -> float:
     return float(np.sum((mrec[idx + 1] - mrec[idx]) * mpre[idx + 1]))
 
 
-def _group(records: dict, has_score: bool):
+def _group(
+    records: Mapping[str, Any], has_score: bool
+) -> dict[tuple[str, int], np.ndarray]:
     """Group boxes by the frame and class matching boundary."""
-    grouped: dict[tuple, list] = defaultdict(list)
+    grouped: dict[tuple[str, int], list[np.ndarray]] = defaultdict(list)
     cls_col = 1 if has_score else 0
     for frame_id, arr in records.items():
         arr = np.asarray(arr, dtype=np.float64).reshape(-1, 7 if has_score else 6)
@@ -45,12 +49,12 @@ def _group(records: dict, has_score: bool):
 
 
 def evaluate(
-    preds: dict,
-    gts: dict,
+    preds: Mapping[str, Any],
+    gts: Mapping[str, Any],
     conv: AngleConvention = DEFAULT_CONVENTION,
-    thresholds: tuple = RIOU_THRESHOLDS,
-    classes: tuple = CLASS_IDS,
-) -> dict:
+    thresholds: Sequence[float] = RIOU_THRESHOLDS,
+    classes: Sequence[int] = CLASS_IDS,
+) -> dict[str, Any]:
     """
     Compute the official metric contract.
 
@@ -61,7 +65,7 @@ def evaluate(
     pred_g = _group(preds, has_score=True)
     gt_g = _group(gts, has_score=False)
 
-    iou_cache: dict[tuple, tuple[np.ndarray, np.ndarray]] = {}
+    iou_cache: dict[tuple[str, int], tuple[np.ndarray, np.ndarray]] = {}
     pred_keys = set(pred_g.keys())
     for key in pred_keys:
         p = pred_g[key]
@@ -74,7 +78,7 @@ def evaluate(
         m = rotated_iou_matrix(p_sorted[:, 2:7], g[:, 1:6], conv=conv)
         iou_cache[key] = (p_sorted[:, 0], m)
 
-    n_gt_per_cls = defaultdict(int)
+    n_gt_per_cls: defaultdict[int, int] = defaultdict(int)
     for (_, cls), g in gt_g.items():
         n_gt_per_cls[cls] += len(g)
 
@@ -93,7 +97,7 @@ def evaluate(
 
         thr_aps = {}
         for thr in thresholds:
-            assigned: dict = defaultdict(set)
+            assigned: defaultdict[str, set[int]] = defaultdict(set)
             is_tp = np.zeros(len(entries), dtype=bool)
             for i, (_sc, frame_id, li) in enumerate(entries):
                 _, m = iou_cache[(frame_id, cls)]
