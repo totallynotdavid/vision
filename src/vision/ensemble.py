@@ -8,7 +8,6 @@ from .geometry import DEFAULT_CONVENTION, AngleConvention, rotated_iou
 
 
 def _fuse(cluster: np.ndarray) -> np.ndarray:
-    """Fuse one rIoU cluster into a single project IR row."""
     w = cluster[:, 0]
     wsum = w.sum() or 1.0
     cls = int(np.bincount(cluster[:, 1].astype(int)).argmax())
@@ -18,23 +17,16 @@ def _fuse(cluster: np.ndarray) -> np.ndarray:
     mean_ang = (
         np.rad2deg(np.arctan2((np.sin(ang2) * w).sum(), (np.cos(ang2) * w).sum())) / 2.0
     )
-    score = w.max()  # Preserve confidence when any source is confident.
+    score = w.max()
     return np.array([score, cls, geo[0], geo[1], geo[2], geo[3], mean_ang % 180])
 
 
 def wbf_frame(
     preds_list: list[np.ndarray],
-    weights: list[float] | None = None,
     iou_thr: float = 0.55,
     conv: AngleConvention = DEFAULT_CONVENTION,
 ) -> np.ndarray:
-    """Fuse prediction sets for one frame."""
-    weights = weights or [1.0] * len(preds_list)
-    rows = []
-    for arr, wt in zip(preds_list, weights, strict=True):
-        a = np.asarray(arr, dtype=np.float64).reshape(-1, 7).copy()
-        a[:, 0] *= wt
-        rows.append(a)
+    rows = [np.asarray(arr, dtype=np.float64).reshape(-1, 7) for arr in preds_list]
     allp = np.vstack(rows) if rows else np.zeros((0, 7))
     if len(allp) == 0:
         return np.zeros((0, 7))
@@ -59,14 +51,13 @@ def wbf_frame(
 
 def wbf(
     pred_dicts: list[dict[str, np.ndarray]],
-    weights: list[float] | None = None,
     iou_thr: float = 0.55,
     conv: AngleConvention = DEFAULT_CONVENTION,
 ) -> dict[str, np.ndarray]:
     frame_ids: set[str] = set().union(*[set(d.keys()) for d in pred_dicts])
     return {
         fid: wbf_frame(
-            [d.get(fid, np.zeros((0, 7))) for d in pred_dicts], weights, iou_thr, conv
+            [d.get(fid, np.zeros((0, 7))) for d in pred_dicts], iou_thr, conv
         )
         for fid in frame_ids
     }
