@@ -9,12 +9,16 @@ from typing import Any
 import numpy as np
 import pytest
 
+from vision.backends import UltralyticsOBB
 from vision.geometry import AngleConvention, obb_to_corners
 from vision.infer import predict_plain, predict_sahi
 
 CCW = AngleConvention(ccw=True)
 CW = AngleConvention(ccw=False)
 FRAMES = [("clip_0001", "clip_0001.png")]
+
+
+_UNSET: Any = object()
 
 
 class _Tensor:
@@ -52,10 +56,12 @@ def _install_ultralytics(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "ultralytics", module)
 
 
-def _install_sahi(monkeypatch: pytest.MonkeyPatch) -> None:
+def _install_sahi(monkeypatch: pytest.MonkeyPatch, mask: Any = _UNSET) -> None:
     corners = obb_to_corners(50.0, 40.0, 20.0, 10.0, 30.0, CCW)
+    if mask is _UNSET:
+        mask = types.SimpleNamespace(segmentation=[corners.ravel().tolist()])
     prediction = types.SimpleNamespace(
-        mask=types.SimpleNamespace(segmentation=[corners.ravel().tolist()]),
+        mask=mask,
         score=types.SimpleNamespace(value=0.8),
         category=types.SimpleNamespace(id=2),
     )
@@ -103,3 +109,27 @@ def test_sahi_prediction_flips_the_angle_for_a_clockwise_convention(
     assert ccw[6] != 0.0
     assert cw[6] == pytest.approx(-ccw[6])
     assert cw[:6] == pytest.approx(ccw[:6])
+
+
+@pytest.mark.parametrize("sahi", [False, True])
+def test_backend_forwards_the_convention_to_inference(
+    sahi: bool, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _install_ultralytics(monkeypatch)
+    _install_sahi(monkeypatch)
+    cfg = {"sahi": {"enabled": sahi}}
+    backend = UltralyticsOBB()
+    ccw = backend.predict(FRAMES, cfg, "best.pt", CCW)["clip_0001"][0]
+    cw = backend.predict(FRAMES, cfg, "best.pt", CW)["clip_0001"][0]
+    assert ccw[6] != 0.0
+    assert cw[6] == pytest.approx(-ccw[6])
+    assert cw[:6] == pytest.approx(ccw[:6])
+
+
+@pytest.mark.parametrize("mask", [None, types.SimpleNamespace(segmentation=[])])
+def test_sahi_prediction_without_obb_points_is_an_error(
+    mask: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _install_sahi(monkeypatch, mask)
+    with pytest.raises(ValueError, match=r"clip_0001.*OBB checkpoint"):
+        predict_sahi("best.pt", FRAMES, {})

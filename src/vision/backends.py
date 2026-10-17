@@ -7,6 +7,8 @@ from typing import Any
 
 import numpy as np
 
+from .geometry import DEFAULT_CONVENTION, AngleConvention
+
 
 class Backend:
     """Backends train a checkpoint and return project IR predictions."""
@@ -74,7 +76,7 @@ class DummyOBB(Backend):
 
 
 class UltralyticsOBB(Backend):
-    """Real YOLO26-OBB. Heavy deps imported lazily so importing this module is cheap."""
+    """Real YOLO26-OBB."""
 
     def train(
         self,
@@ -112,13 +114,17 @@ class UltralyticsOBB(Backend):
         return str(Path(results.save_dir) / "weights" / "best.pt")
 
     def predict(
-        self, frames: list[tuple[str, str]], cfg: Any, ckpt: str
+        self,
+        frames: list[tuple[str, str]],
+        cfg: Any,
+        ckpt: str,
+        conv: AngleConvention = DEFAULT_CONVENTION,
     ) -> dict[str, np.ndarray]:
         from .infer import predict_plain, predict_sahi
 
         if cfg.get("sahi", {}).get("enabled"):
-            return predict_sahi(ckpt, frames, cfg)
-        return predict_plain(ckpt, frames, cfg)
+            return predict_sahi(ckpt, frames, cfg, conv)
+        return predict_plain(ckpt, frames, cfg, conv)
 
 
 def make_backend(cfg: Any, gts: dict[str, np.ndarray] | None = None) -> Backend:

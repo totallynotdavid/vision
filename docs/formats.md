@@ -57,8 +57,8 @@ to `DEFAULT_CONVENTION`.
 `predict_plain` and `predict_sahi` in
 [`src/vision/infer.py`](../src/vision/infer.py) take one too. They read
 Ultralytics and OpenCV angles as counter-clockwise and flip the sign when `ccw`
-is false. `UltralyticsOBB.predict` does not pass one, so a sweep always uses
-`DEFAULT_CONVENTION`.
+is false. `UltralyticsOBB.predict` takes one and passes it on. The sweep passes
+none, so it uses `DEFAULT_CONVENTION`.
 
 Rotated IoU uses Shapely polygons. A box that is not a valid polygon is repaired
 with `buffer(0)`, and a box with zero area has IoU 0.
