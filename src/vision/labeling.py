@@ -76,8 +76,6 @@ def import_corrections(
 
 
 def rank_by_uncertainty(preds: dict[str, np.ndarray]) -> list[str]:
-    """Review empty and low-confidence frames before confident detections."""
-
     def key(item: tuple[str, np.ndarray]) -> tuple[float, int]:
         arr = np.asarray(item[1]).reshape(-1, 7)
         if len(arr) == 0:

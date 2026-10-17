@@ -23,9 +23,6 @@ def class_counts(gts: dict[str, np.ndarray]) -> dict[int, int]:
 def effective_num_weights(
     counts: dict[int, int], beta: float = 0.999
 ) -> dict[int, float]:
-    """Class-balanced loss weights via 'effective number of samples' (Cui et al.).
-    Preferred over inverse-frequency, which over-corrects and hurts common classes.
-    """
     w = {}
     for c, n in counts.items():
         eff = (1.0 - beta**n) / (1.0 - beta) if n > 0 else 1.0
@@ -35,9 +32,6 @@ def effective_num_weights(
 
 
 def repeat_factors(gts: dict[str, np.ndarray], thr: float = 0.001) -> dict[str, float]:
-    """Image-level Repeat Factor Sampling (Gupta et al.). An image's repeat
-    factor is the max over the categories it contains of max(1, sqrt(thr/f_c)).
-    """
     counts = class_counts(gts)
     total = sum(counts.values()) or 1
     freq = {c: counts[c] / total for c in CLASS_IDS}

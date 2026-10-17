@@ -75,7 +75,6 @@ def prepare_fold_dataset(
     img_wh: tuple[int, int],
     work_dir: Path,
 ) -> str:
-    """Real backends train on per-fold YOLO datasets with optional RFS repeats."""
     import os
 
     w, h = img_wh
@@ -315,12 +314,6 @@ def _check_margin(margin_std: float) -> None:
 def ablation_wins(
     mean: float, baseline_mean: float, baseline_std: float, margin_std: float
 ) -> bool:
-    """Apply the ablation win rule using baseline standard deviations.
-
-    The gain must be strictly positive, so a tie never wins, even at margin 0.
-    A zero baseline standard deviation makes the threshold zero, so any strict
-    gain wins. A NaN or infinite input never wins.
-    """
     _check_margin(margin_std)
     if not all(np.isfinite([mean, baseline_mean, baseline_std])):
         return False
@@ -329,12 +322,6 @@ def ablation_wins(
 
 
 def merge_overrides(groups: dict[str, list[str]]) -> list[str]:
-    """Validate and merge overrides in source order.
-
-    An identical `key=value` repeated by several sources appears once. A key
-    that two sources set to different values raises `ValueError`. Each source
-    was only validated on its own.
-    """
     owner: dict[str, tuple[str, str]] = {}
     merged: list[str] = []
     for source, overrides in groups.items():

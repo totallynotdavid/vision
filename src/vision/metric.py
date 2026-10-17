@@ -37,7 +37,6 @@ def _ap_all_points(scores: np.ndarray, is_tp: np.ndarray, n_gt: int) -> float:
 def _group(
     records: Mapping[str, Any], has_score: bool
 ) -> dict[tuple[str, int], np.ndarray]:
-    """Group boxes by the frame and class matching boundary."""
     grouped: dict[tuple[str, int], list[np.ndarray]] = defaultdict(list)
     cls_col = 1 if has_score else 0
     for frame_id, arr in records.items():
@@ -55,13 +54,6 @@ def evaluate(
     thresholds: Sequence[float] = RIOU_THRESHOLDS,
     classes: Sequence[int] = CLASS_IDS,
 ) -> dict[str, Any]:
-    """
-    Compute the official metric contract.
-
-    Matches are per frame and per class. Each ground-truth box can be assigned
-    once per threshold. Duplicate predictions and wrong-class predictions are
-    false positives.
-    """
     pred_g = _group(preds, has_score=True)
     gt_g = _group(gts, has_score=False)
 

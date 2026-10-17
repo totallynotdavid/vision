@@ -11,7 +11,6 @@ import pandas as pd
 from . import CLASS_IDS
 from .geometry import DEFAULT_CONVENTION, obb_to_corners
 
-# Per-class size priors keep synthetic objects visually distinct.
 _SIZE = {
     1: (60, 30),
     2: (90, 40),

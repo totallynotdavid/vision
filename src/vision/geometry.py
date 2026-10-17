@@ -52,7 +52,6 @@ def corners_to_obb(
 
     pts = np.asarray(corners, dtype=np.float32).reshape(-1, 2)
     (cx, cy), (w, h), ang = cv2.minAreaRect(pts)
-    # OpenCV's angle sign is normalized back into the calibrated convention.
     return float(cx), float(cy), float(w), float(h), conv.from_ccw(float(ang))
 
 

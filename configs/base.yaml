@@ -26,23 +26,23 @@ model:
   cls_gain: 0.5
   seed: 0
 
-aug: # Long-tail augmentation levers.
+aug:
   mosaic: 1.0
   mixup: 0.0
   copy_paste: 0.0
 
-sampling: # Long-tail sampling levers.
+sampling:
   rfs: false
   rfs_thr: 0.001
 
-sahi: # Small-object inference lever.
+sahi:
   enabled: false
   tile: 640 # AUTO from image size
   overlap: 0.2
 
-tta: { enabled: false } # Multi-scale and flip inference.
-tracking: { enabled: false } # Temporal gap filling at inference.
-ensemble: # Multi-seed rotated WBF for the final stage.
+tta: { enabled: false }
+tracking: { enabled: false }
+ensemble:
   enabled: false
   seeds: [0, 1]
   iou_thr: 0.55
@@ -51,7 +51,6 @@ sweep:
   results_csv: results.csv
   work_dir: runs
   stages: [baseline, ablations, combine, final]
-  # Each ablation isolates one lever against the baseline.
   ablations:
     sahi: ["sahi.enabled=true"]
     mixup: ["aug.mixup=0.15"]
