@@ -1,8 +1,5 @@
 # data is large / not ours to commit
-data/raw/
-data/yolo/
-data/external/
-data/synth/
+data/
 
 # experiment outputs
 runs/
