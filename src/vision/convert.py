@@ -43,14 +43,12 @@ def parse_pred_cell(cell: str) -> np.ndarray:
     return np.asarray(rows, dtype=np.float64).reshape(-1, 7)
 
 
-def format_pred_cell(pred: np.ndarray, drop_invalid: bool = True) -> str:
+def format_pred_cell(pred: np.ndarray) -> str:
     """Invalid predictions are omitted before writing a submission cell."""
     pred = np.asarray(pred, dtype=np.float64).reshape(-1, 7)
     parts = []
     for sc, cls, cx, cy, w, h, ang in pred:
-        if drop_invalid and not (
-            is_valid_box(cx, cy, w, h, ang) and 1 <= int(cls) <= 9
-        ):
+        if not (is_valid_box(cx, cy, w, h, ang) and 1 <= int(cls) <= 9):
             continue
         parts.append(f"{sc:.4f} {int(cls)} {cx:.2f} {cy:.2f} {w:.2f} {h:.2f} {ang:.2f}")
     return ";".join(parts) if parts else NONE_TOKEN
@@ -61,7 +59,6 @@ def load_gts(
     id_col: str = "Id",
     target_col: str = "Target",
 ) -> dict[str, np.ndarray]:
-    """Column names stay configurable until the real `train.csv` schema is known."""
     df = pd.read_csv(csv_path)
     return {str(r[id_col]): parse_gt_cell(str(r[target_col])) for _, r in df.iterrows()}
 
