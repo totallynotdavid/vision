@@ -8,8 +8,8 @@ mise run install    # uv sync --locked
 ```
 
 Without mise, `uv` fetches Python 3.14 on the first sync. The `train` extra
-(`uv sync --extra train`) adds Ultralytics, SAHI and `lap`; it pulls torch and
-is needed only for real-backend runs.
+(`uv sync --extra train`) adds Ultralytics and SAHI; it pulls torch and is
+needed only for real-backend runs.
 
 ## Check
 
@@ -37,10 +37,12 @@ and TOML.
 backend. It covers rotated IoU, the corner round trip, the text-cell round trip,
 the metric on perfect and partial predictions, the clip-grouped split, the
 `git_sha` fallback, and a full sweep over synthetic data in a temporary
-directory. Add a test for the behavior you change. Real-backend code needs the
-`train` extra and a GPU and has no test, except the conversion of Ultralytics
-output to IR in [`tests/test_infer.py`](../tests/test_infer.py), which runs
-against a fake model.
+directory. [`tests/test_win_rule.py`](../tests/test_win_rule.py) covers the
+ablation win rule and the combination of winners. Add a test for the behavior
+you change. Real-backend code needs the `train` extra and a GPU and has no test,
+except the conversion of Ultralytics output to IR in
+[`tests/test_infer.py`](../tests/test_infer.py), which runs against a fake
+model.
 
 ## Documentation
 
