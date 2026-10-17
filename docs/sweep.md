@@ -113,6 +113,9 @@ Ablations override these keys. Defaults are in
 | `tracking.enabled`                       | Per-clip tracking of detections across consecutive frames, with Hungarian matching on rotated IoU.                                      |
 | `ensemble.enabled`, `seeds`, `iou_thr`   | Train one model per seed and fuse same-class boxes whose rotated IoU reaches `iou_thr` with [`ensemble.py`](../src/vision/ensemble.py). |
 
+The repeat factor of a class is `max(1, sqrt(rfs_thr / p))`, where `p` is the
+class's share of all ground-truth boxes. A class with no boxes has factor 1.
+
 The dummy backend reads `model.seed`, `model.dummy_noise`, `model.dummy_recall`,
 and `sahi.enabled`. It ignores the other model keys, so `abl_size_s` scores the
 same as the baseline in the smoke config.
