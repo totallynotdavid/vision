@@ -7,5 +7,5 @@
 - Import `ultralytics`, `sahi` and `torch` inside functions, never at module top
   level.
 - Do not commit `data/`, `runs/`, checkpoints or `results.csv`.
-- The module map is `architecture.md`. Update it when you add or remove a
+- The module map is `docs/architecture.md`. Update it when you add or remove a
   module.

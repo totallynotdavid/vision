@@ -13,7 +13,7 @@ predicts a test set.
 Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync --extra dev
+uv sync
 ```
 
 ## Try it without data or a GPU
@@ -67,5 +67,5 @@ folds. [`docs/sweep.md`](docs/sweep.md) explains the stages and the
 ## Documentation
 
 The manual starts at [`docs/readme.md`](docs/readme.md). The module map is in
-[`architecture.md`](architecture.md). To work on the code, read
-[`contributing.md`](contributing.md).
+[`docs/architecture.md`](docs/architecture.md). To work on the code, read
+[`.github/contributing.md`](.github/contributing.md).

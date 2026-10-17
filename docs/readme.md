@@ -9,4 +9,4 @@
 5. [Labeling](labeling.md): move pseudo-labels and corrections through
    X-AnyLabeling.
 
-The code map is in [`architecture.md`](../architecture.md).
+The code map is in [`architecture.md`](architecture.md).
