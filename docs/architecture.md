@@ -8,7 +8,7 @@ Configuration is OmegaConf YAML in [`configs/`](../configs/).
 
 | Module                                     | Responsibility                                                                                          |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| [`__init__.py`](../src/vision/__init__.py) | Class ids and names, `NUM_CLASSES`, and the rotated-IoU thresholds.                                     |
+| [`__init__.py`](../src/vision/__init__.py) | Class ids and names, and the rotated-IoU thresholds.                                                    |
 | [`geometry.py`](../src/vision/geometry.py) | `AngleConvention`, box to corners and back, rotated IoU, box validity. The angle convention lives here. |
 | [`convert.py`](../src/vision/convert.py)   | Competition text cells, IR, and YOLO-OBB labels; `dataset.yaml`; submission CSV.                        |
 | [`metric.py`](../src/vision/metric.py)     | Macro AP-rIoU.                                                                                          |
