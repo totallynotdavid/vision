@@ -25,27 +25,21 @@ _PALETTE = [
 def draw_obbs(
     img: np.ndarray,
     boxes: np.ndarray,
-    has_score: bool = False,
     conv: AngleConvention = DEFAULT_CONVENTION,
 ) -> np.ndarray:
-    """Prediction boxes may include a leading confidence score."""
     import cv2
 
     out = img.copy()
-    boxes = np.asarray(boxes, dtype=np.float64).reshape(-1, 7 if has_score else 6)
-    off = 1 if has_score else 0
+    boxes = np.asarray(boxes, dtype=np.float64).reshape(-1, 6)
     for row in boxes:
-        cls = int(row[off])
-        cx, cy, w, h, ang = row[off + 1 : off + 6]
+        cls = int(row[0])
+        cx, cy, w, h, ang = row[1:6]
         corners = obb_to_corners(cx, cy, w, h, ang, conv).astype(np.int32)
         color = _PALETTE[(cls - 1) % len(_PALETTE)]
         cv2.polylines(out, [corners], isClosed=True, color=color, thickness=2)
-        label = CLASSES.get(cls, str(cls))
-        if has_score:
-            label += f" {row[0]:.2f}"
         cv2.putText(
             out,
-            label,
+            CLASSES.get(cls, str(cls)),
             tuple(corners[0]),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.4,
@@ -63,7 +57,6 @@ def render_calibration(
     n: int = 12,
     conv: AngleConvention = DEFAULT_CONVENTION,
 ) -> Path:
-    """Calibration overlays must be inspected before training on real data."""
     import cv2
 
     images_dir, out_dir = Path(images_dir), Path(out_dir)
