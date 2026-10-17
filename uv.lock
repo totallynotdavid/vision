@@ -3,12 +3,12 @@ revision = 5
 requires-python = ">=3.14"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version < '3.15' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version < '3.15' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'darwin'",
+    "python_full_version < '3.15' and sys_platform == 'win32'",
+    "python_full_version < '3.15' and sys_platform == 'emscripten'",
+    "python_full_version < '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.15' and sys_platform == 'darwin'",
 ]
 
@@ -557,25 +557,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/e3/9a/59a6f6ae6f938c15076be2c21b6cedea973d71bb1349ec84fa485fab82cf/kiwisolver-1.5.1-cp315-cp315t-musllinux_1_2_x86_64.whl", hash = "sha256:ab620eb663952455271ac37f9aaad86b73c969c02f11f53cea405b38e96a4300", size = 2395634, upload-time = "2026-08-28T10:28:03.977Z" },
     { url = "https://files.pythonhosted.org/packages/e9/2d/8982c1fb7926da5bb7ed60318c3665b5c3f941447271ac982960a11b8637/kiwisolver-1.5.1-cp315-cp315t-win_amd64.whl", hash = "sha256:cb6fae641357ed2f6e533c0d3c6504a4a5703621a50c89459e46051d56b61140", size = 75379, upload-time = "2026-08-28T10:28:06.307Z" },
     { url = "https://files.pythonhosted.org/packages/07/78/ba7b6dfa1708b82b373ac056928a30c545d5c1a627df9839dcec3c6c1881/kiwisolver-1.5.1-cp315-cp315t-win_arm64.whl", hash = "sha256:b390aec180a7c054919c04898835e1c77bced23ea8383eb2c570213bf25d1a86", size = 73011, upload-time = "2026-08-28T10:28:07.578Z" },
-]
-
-[[package]]
-name = "lap"
-version = "0.5.13"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f1/ae/5cc637c2e5158b7dcf1a9744d33b11dfc21d9309931169402f573e4d1ee3/lap-0.5.13.tar.gz", hash = "sha256:9eff7169e3ca452995af0493cc20d35452c4bfd06122c36c06457119ffbd411b", size = 1537351, upload-time = "2026-02-23T12:37:24.789Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/ec/0b16230748a32fb7d4b8374b8680e5c453735b88e662f6ea54626ad5bef4/lap-0.5.13-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:c0dfa1df4a6b30d250b9b304add985feb156d62ca3df79cfe1a40e6c80b9d304", size = 1479614, upload-time = "2026-02-23T12:36:44.5Z" },
-    { url = "https://files.pythonhosted.org/packages/0d/49/2d78d0d9cad96b15e37e7195854e32bfc61c9674dea1c5b62092880e89af/lap-0.5.13-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:a2bb48c8fd21bb9f69099760cfc90233467e52c62e1528b271f961b4d3b59308", size = 1477530, upload-time = "2026-02-23T12:36:46.016Z" },
-    { url = "https://files.pythonhosted.org/packages/ee/0d/da2d6d3c87e09e3d89b83fb4b35717d6608e514b37a299f8f23d4eccafa5/lap-0.5.13-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:8a29fcacbd1d94c68e0b36513558213940943d62ae8fd65f55350f7b8be073c0", size = 1716942, upload-time = "2026-02-23T12:36:47.492Z" },
-    { url = "https://files.pythonhosted.org/packages/a0/3e/7ebfdbd52f818074c6517779c6da1f25a8e5eced38cb1518e7c2a618d04d/lap-0.5.13-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b4f5a7a5f309fa55588eb21ec1bb347356800d4007b0547bb25b5d98552cfaa1", size = 1714853, upload-time = "2026-02-23T12:36:49.084Z" },
-    { url = "https://files.pythonhosted.org/packages/d8/8e/5fcedfaf18c2db03410e7b6bda191cb81ec1e452b1f38e27f668ad87a33e/lap-0.5.13-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:a1ab768edaa10ee9ad32bd651ed904104c5ca12c7333bad8cd43cb62bdb62fd9", size = 1705449, upload-time = "2026-02-23T12:36:50.663Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/04/3ba6fd224fe1994bb7fa6f0131cc73f54f5487df69a2dacd4dc02df66f78/lap-0.5.13-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:398db6cb10287e97c2f54c9f333adbee4a2e502f00744b402173a95749ee35c0", size = 1713766, upload-time = "2026-02-23T12:36:52.004Z" },
-    { url = "https://files.pythonhosted.org/packages/32/57/a6b18ec8dbb0145debfa3c8dfa9f35c3e5a28e96340cd8138370d1605657/lap-0.5.13-cp314-cp314-win_amd64.whl", hash = "sha256:40ef084ff5cd10fffbac76f56de4f5c2da039af57412e19a496c263397c8ffb4", size = 1477488, upload-time = "2026-02-23T12:36:53.514Z" },
-    { url = "https://files.pythonhosted.org/packages/c1/37/a23772ed1ced8d58e089f23d835857b9ae759a9f5733edc4b0c52fb393db/lap-0.5.13-cp314-cp314-win_arm64.whl", hash = "sha256:b5ef3928303c37661f887e1f8b28a381b07bcb0b9868fe911b5ef4e205f31495", size = 1467015, upload-time = "2026-02-23T12:36:54.684Z" },
 ]
 
 [[package]]
@@ -1684,15 +1665,6 @@ wheels = [
 ]
 
 [[package]]
-name = "types-tqdm"
-version = "4.70.0.20260906"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/fe/92/517d71d5a399cd2f8ead3b4328d987262478f22fbbe7f8312360d4c321d0/types_tqdm-4.70.0.20260906.tar.gz", hash = "sha256:6581dc996152a87d51ce2ea169169187ffc0a96dacdb8adbdef29cbee8c1e631", size = 19309, upload-time = "2026-09-06T06:35:31.916Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/ea/d12697988ab2c672877796ecaea69666e2379ee7b40f01f4540250d5a97b/types_tqdm-4.70.0.20260906-py3-none-any.whl", hash = "sha256:c3b88c694928515d601f73fa6646aa43adc0ef735bedbeebf0cc543f6a201ae8", size = 25181, upload-time = "2026-09-06T06:35:30.931Z" },
-]
-
-[[package]]
 name = "typing-extensions"
 version = "4.16.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1779,12 +1751,10 @@ dependencies = [
     { name = "pandas" },
     { name = "scipy" },
     { name = "shapely" },
-    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
 train = [
-    { name = "lap" },
     { name = "sahi" },
     { name = "ultralytics" },
 ]
@@ -1797,12 +1767,10 @@ dev = [
     { name = "ruff" },
     { name = "scipy-stubs" },
     { name = "types-shapely" },
-    { name = "types-tqdm" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "lap", marker = "extra == 'train'", specifier = ">=0.5.13" },
     { name = "numpy", specifier = ">=2.5.4,<3" },
     { name = "omegaconf", specifier = ">=2.4.0" },
     { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
@@ -1810,7 +1778,6 @@ requires-dist = [
     { name = "sahi", marker = "extra == 'train'", specifier = ">=0.12.8" },
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "shapely", specifier = ">=2.2.0,<3" },
-    { name = "tqdm", specifier = ">=4.70.1" },
     { name = "ultralytics", marker = "extra == 'train'", specifier = ">=8.4.177" },
 ]
 provides-extras = ["train"]
@@ -1823,5 +1790,4 @@ dev = [
     { name = "ruff", specifier = ">=0.17.0" },
     { name = "scipy-stubs", specifier = ">=1.18.0" },
     { name = "types-shapely", specifier = ">=2.1.0" },
-    { name = "types-tqdm", specifier = ">=4.67.0" },
 ]

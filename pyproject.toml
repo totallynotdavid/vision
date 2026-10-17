@@ -12,7 +12,6 @@ dependencies = [
   "pandas>=3.0.6", # CSV inputs and run logs.
   "omegaconf>=2.4.0", # Dotlist overrides and config composition.
   "scipy>=1.18.1", # Hungarian matching for tracking.
-  "tqdm>=4.70.1",
 ]
 
 [project.optional-dependencies]
@@ -20,7 +19,6 @@ dependencies = [
 train = [
   "ultralytics>=8.4.177", # YOLO26-OBB backend.
   "sahi>=0.12.8", # Tiled inference.
-  "lap>=0.5.13", # Optional fast assignment backend.
 ]
 
 [dependency-groups]
@@ -31,7 +29,6 @@ dev = [
   "ruff>=0.17.0",
   "scipy-stubs>=1.18.0",
   "types-shapely>=2.1.0",
-  "types-tqdm>=4.67.0",
 ]
 
 [build-system]
@@ -52,10 +49,11 @@ strict = true
 python_version = "3.14"
 files = ["src", "tests"]
 
-# The train extra is not installed where `check` runs.
+# Treat optional training dependencies as Any.
 [[tool.mypy.overrides]]
 module = ["ultralytics", "ultralytics.*", "sahi", "sahi.*"]
 ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
