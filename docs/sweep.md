@@ -34,8 +34,7 @@ The code is [`src/vision/sweep.py`](../src/vision/sweep.py).
    - When the baseline standard deviation is 0, the threshold is 0, so any
      strictly positive gain wins.
    - A NaN or infinite mean or standard deviation never wins. A fold with no
-     ground truth scores NaN and is left out of the mean and standard
-     deviation.
+     ground truth scores NaN and is left out of the mean and standard deviation.
    - Two winners that set the same key to different text stop the sweep with an
      error naming the key and both sources. For example, `model.size=s` and
      `model.size=m` conflict because neither was tested with the other's value.
@@ -44,6 +43,7 @@ The code is [`src/vision/sweep.py`](../src/vision/sweep.py).
      overrides. Values compare as written, so `1` and `1.0` conflict.
    - `win_margin_std` must be finite and at least 0, or the sweep stops with an
      error.
+
 4. `final` runs the winners plus `tta.enabled=true`, `tracking.enabled=true` and
    `ensemble.enabled=true` as `final`.
 

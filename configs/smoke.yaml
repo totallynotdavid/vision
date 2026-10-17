@@ -34,7 +34,7 @@ sweep:
   work_dir: runs/smoke
   stages: [baseline, ablations, combine, final]
   ablations:
-    sahi:      ["sahi.enabled=true"]
-    tracking:  ["tracking.enabled=true"]
-    size_s:    ["model.size=s"]
+    sahi: ["sahi.enabled=true"]
+    tracking: ["tracking.enabled=true"]
+    size_s: ["model.size=s"]
   win_margin_std: 0.0

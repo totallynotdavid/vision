@@ -1,19 +1,36 @@
 [tools]
 python = "3.14.8"
 uv = "0.13.0"
-ruff = "0.17.0"
+oxfmt = "0.73.0"
+
+[tasks.install]
+description = "Install Python dependencies from uv.lock without resolving"
+run = "uv sync --locked"
 
 [tasks.lint]
-run = "uv run ruff check ."
+description = "Check Python, Markdown, YAML and TOML without writing"
+depends = ["lint:*"]
 
-[tasks.format-check]
-run = "uv run ruff format --check ."
+[tasks."lint:py"]
+description = "Check Python with ruff"
+run = ["uv run ruff check --no-fix .", "uv run ruff format --check ."]
 
-[tasks.format]
-run = "uv run ruff format ."
+[tasks."lint:md"]
+description = "Check Markdown, YAML and TOML formatting with oxfmt"
+run = "oxfmt --check ."
+
+[tasks.fix]
+description = "Apply safe ruff fixes and format Python, Markdown, YAML and TOML"
+run = ["uv run ruff check --fix .", "uv run ruff format .", "oxfmt ."]
+
+[tasks.typecheck]
+description = "Type-check src and tests with mypy strict"
+run = "uv run mypy"
 
 [tasks.test]
+description = "Run the pytest suite"
 run = "uv run pytest"
 
 [tasks.check]
-depends = ["lint", "format-check", "test"]
+description = "Run lint, typecheck and test without writing files"
+depends = ["lint", "typecheck", "test"]
