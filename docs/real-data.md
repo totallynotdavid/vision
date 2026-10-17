@@ -6,7 +6,7 @@ the synthetic dataset from `uv run python -m vision.synth data/synth`; replace
 
 `vision.data inspect` and `vision.viz` take only the data directory. They read
 `<dir>/train.csv` with columns `Id` and `Target` and the frames in
-`<dir>/images/`, whatever the `data.*` keys say. The sweep reads those keys.
+`<dir>/images/`. Only the sweep reads the `data.*` keys.
 
 ## Layout
 
@@ -19,8 +19,7 @@ data/raw/
 Each `Target` cell is a ground-truth list in the
 [competition text format](formats.md#competition-text-cells). For the sweep, the
 file name, column names, image folder and extension are the `data.*` keys of
-[`configs/base.yaml`](../configs/base.yaml). `data/raw/`, `data/yolo/`,
-`data/external/` and `data/synth/` are git-ignored.
+[`configs/base.yaml`](../configs/base.yaml). `data/` is git-ignored.
 
 ## Inspect
 
@@ -46,8 +45,10 @@ config by hand:
 - `image_size` guides `model.imgsz`.
 - The suggested SAHI tile guides `sahi.tile`. It is `None` when the longest side
   is 1280 or less, 640 up to 2048, and 1024 above that.
-- `loss_w` are class-balanced weights from the effective number of samples (beta
-  0.999), normalized to mean 1. No config key reads them.
+- `loss_w` are class-balanced weights from the effective number of samples. A
+  class with `n` boxes has effective number `(1 - 0.999^n) / (1 - 0.999)`, or 1
+  when `n` is 0. Its weight is the inverse, scaled so the weights average 1. No
+  config key reads them.
 
 The code is [`src/vision/data.py`](../src/vision/data.py).
 
@@ -63,10 +64,8 @@ the images in `runs/calibration/`. Open them and check that every box lies on
 its vehicle. If the boxes are rotated the wrong way, flip the `ccw` default of
 `AngleConvention` in [`src/vision/geometry.py`](../src/vision/geometry.py). That
 setting is the default for corner conversion, rotated IoU, YOLO labels, overlays
-and the labeling converters. It does not reach the angles that the Ultralytics
-backend predicts: inference reads them with a fixed sign, so the metric and the
-labels follow the flip and the predictions do not. See
-[the angle convention](formats.md#angle-convention).
+and the labeling converters, and the angles that the Ultralytics backend
+predicts. See [the angle convention](formats.md#angle-convention).
 
 ## Configure and run
 
