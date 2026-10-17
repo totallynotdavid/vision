@@ -1,24 +1,19 @@
-"""
-End-to-end smoke test on synthetic data, zero GPU/network. Proves the harness
-runs the moment real data arrives. Run: `uv run pytest`.
-"""
+"""Exercise the CPU pipeline on synthetic data without GPU or network access."""
 
 from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pytest
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 
 from vision.convert import format_pred_cell, parse_gt_cell, parse_pred_cell
 from vision.geometry import corners_to_obb, obb_to_corners, rotated_iou
 from vision.metric import evaluate
 from vision.splits import clip_of, make_folds
-from vision.sweep import git_sha
-from vision.synth import make_synthetic
+from vision.sweep import git_sha, run_sweep
 
 
 def test_rotated_iou_identity_and_disjoint() -> None:
@@ -57,11 +52,14 @@ def test_metric_perfect_and_partial() -> None:
     assert evaluate(empty, gts)["score"] == 0.0
 
 
-def test_git_sha_falls_back_on_os_error(monkeypatch: pytest.MonkeyPatch) -> None:
-    def raise_permission_error(*args: Any, **kwargs: Any) -> None:
-        raise PermissionError("git binary not executable")
-
-    monkeypatch.setattr("subprocess.check_output", raise_permission_error)
+@pytest.mark.parametrize("failure", ["git_missing", "not_a_repository"])
+def test_git_sha_without_a_usable_git_is_nogit(
+    failure: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    if failure == "git_missing":
+        monkeypatch.setenv("PATH", str(tmp_path))
+    else:
+        monkeypatch.setenv("GIT_DIR", str(tmp_path / "absent"))
     assert git_sha() == "nogit"
 
 
@@ -74,31 +72,13 @@ def test_clip_grouped_split_has_no_leak() -> None:
         assert train_clips.isdisjoint(val_clips), "clip leaked across split!"
 
 
-def test_full_sweep_end_to_end(tmp_path: Path) -> None:
-    synth = tmp_path / "synth"
-    info = make_synthetic(synth, n_clips=4, frames_per_clip=6, seed=0)
-    assert info["csv"].exists()
+def test_full_sweep_end_to_end(smoke_cfg: DictConfig) -> None:
+    run_sweep(smoke_cfg)
 
-    cfg = OmegaConf.load("configs/smoke.yaml")
-    assert isinstance(cfg, DictConfig)
-    cfg.data.raw_dir = str(synth)
-    cfg.cv.folds_file = str(tmp_path / "folds.json")
-    cfg.sweep.results_csv = str(tmp_path / "results.csv")
-    cfg.sweep.work_dir = str(tmp_path / "runs")
-
-    from vision.sweep import run_sweep
-
-    run_sweep(cfg)
-
-    results = Path(cfg.sweep.results_csv)
-    assert results.exists()
-    with open(results) as f:
+    with open(smoke_cfg.sweep.results_csv) as f:
         rows = list(csv.DictReader(f))
-    names = {r["exp"] for r in rows}
-    assert "baseline" in names
+    assert {"baseline", "final"} <= {r["exp"] for r in rows}
     for r in rows:
-        m = float(r["mean"])
-        assert 0.0 <= m <= 1.0
-    # The dummy backend should keep the baseline above chance.
+        assert 0.0 <= float(r["mean"]) <= 1.0
     base = next(r for r in rows if r["exp"] == "baseline")
     assert float(base["mean"]) > 0.3
