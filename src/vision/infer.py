@@ -43,7 +43,7 @@ def predict_plain(
 
     mcfg = cfg.get("model", {})
     model = YOLO(ckpt)
-    conf = float(mcfg.get("conf", 0.05))  # AP favors recall before score sorting.
+    conf = float(mcfg.get("conf", 0.05))
     imgsz = int(mcfg.get("imgsz", 640))
     out = {}
     paths = [p for _, p in frames]
@@ -91,14 +91,14 @@ def predict_sahi(
         )
         rows = []
         for op in result.object_prediction_list:
-            seg = op.mask.segmentation[0] if op.mask is not None else None
-            if seg is not None and len(seg) >= 8:
-                pts = np.asarray(seg, dtype=np.float32).reshape(-1, 2)
-                cx, cy, w, h, ang = corners_to_obb(pts, conv)
-            else:
-                # SAHI may return no mask, so the horizontal box becomes an OBB fallback.
-                x1, y1, x2, y2 = op.bbox.to_xyxy()
-                cx, cy, w, h, ang = (x1 + x2) / 2, (y1 + y2) / 2, x2 - x1, y2 - y1, 0.0
+            segmentation = op.mask.segmentation if op.mask is not None else []
+            if not segmentation:
+                raise ValueError(
+                    f"SAHI returned a box without OBB points for {fid}; "
+                    f"{ckpt} must be an OBB checkpoint"
+                )
+            pts = np.asarray(segmentation[0], dtype=np.float32).reshape(-1, 2)
+            cx, cy, w, h, ang = corners_to_obb(pts, conv)
             rows.append(
                 [
                     op.score.value,
