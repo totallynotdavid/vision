@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -16,7 +17,11 @@ class AngleConvention:
 
     def theta_rad(self, angle_deg: float) -> float:
         sign = 1.0 if self.ccw else -1.0
-        return sign * np.deg2rad(angle_deg)
+        return float(sign * np.deg2rad(angle_deg))
+
+    def from_ccw(self, angle_deg: float) -> float:
+        """Express a counter-clockwise angle in this convention."""
+        return angle_deg if self.ccw else -angle_deg
 
 
 DEFAULT_CONVENTION = AngleConvention()
@@ -48,8 +53,7 @@ def corners_to_obb(
     pts = np.asarray(corners, dtype=np.float32).reshape(-1, 2)
     (cx, cy), (w, h), ang = cv2.minAreaRect(pts)
     # OpenCV's angle sign is normalized back into the calibrated convention.
-    angle_deg = ang if conv.ccw else -ang
-    return float(cx), float(cy), float(w), float(h), float(angle_deg)
+    return float(cx), float(cy), float(w), float(h), conv.from_ccw(float(ang))
 
 
 def obb_to_polygon(
@@ -63,13 +67,17 @@ def obb_to_polygon(
     return Polygon(obb_to_corners(cx, cy, w, h, angle_deg, conv))
 
 
-def rotated_iou(box_a, box_b, conv: AngleConvention = DEFAULT_CONVENTION) -> float:
+def rotated_iou(
+    box_a: Sequence[float] | np.ndarray,
+    box_b: Sequence[float] | np.ndarray,
+    conv: AngleConvention = DEFAULT_CONVENTION,
+) -> float:
     """Degenerate or non-overlapping boxes have rIoU 0.0.
 
     Shapely repairs invalid polygons before measuring overlap.
     """
-    pa = obb_to_polygon(*box_a, conv=conv)
-    pb = obb_to_polygon(*box_b, conv=conv)
+    pa = obb_to_polygon(box_a[0], box_a[1], box_a[2], box_a[3], box_a[4], conv)
+    pb = obb_to_polygon(box_b[0], box_b[1], box_b[2], box_b[3], box_b[4], conv)
     if not pa.is_valid:
         pa = pa.buffer(0)
     if not pb.is_valid:
@@ -89,8 +97,8 @@ def rotated_iou_matrix(
     """Return pairwise rIoU for project OBB arrays."""
     boxes_a = np.asarray(boxes_a, dtype=np.float64).reshape(-1, 5)
     boxes_b = np.asarray(boxes_b, dtype=np.float64).reshape(-1, 5)
-    polys_a = [obb_to_polygon(*b, conv=conv) for b in boxes_a]
-    polys_b = [obb_to_polygon(*b, conv=conv) for b in boxes_b]
+    polys_a = [obb_to_polygon(b[0], b[1], b[2], b[3], b[4], conv) for b in boxes_a]
+    polys_b = [obb_to_polygon(b[0], b[1], b[2], b[3], b[4], conv) for b in boxes_b]
     polys_a = [p if p.is_valid else p.buffer(0) for p in polys_a]
     polys_b = [p if p.is_valid else p.buffer(0) for p in polys_b]
     out = np.zeros((len(polys_a), len(polys_b)), dtype=np.float64)
@@ -109,9 +117,9 @@ def rotated_iou_matrix(
     return out
 
 
-def is_valid_box(cx, cy, w, h, angle_deg) -> bool:
+def is_valid_box(cx: float, cy: float, w: float, h: float, angle_deg: float) -> bool:
     """Competition boxes must be finite and have positive area."""
     vals = (cx, cy, w, h, angle_deg)
     if not all(np.isfinite(v) for v in vals):
         return False
-    return w > 0 and h > 0
+    return bool(w > 0 and h > 0)

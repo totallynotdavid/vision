@@ -2,19 +2,23 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
+from .geometry import DEFAULT_CONVENTION, AngleConvention, corners_to_obb
 
-def _yolo_to_ir(obb, conv_ccw: bool = True) -> np.ndarray:
-    """Ultralytics OBB output uses zero-based classes and radians."""
+
+def _yolo_to_ir(obb: Any, conv: AngleConvention = DEFAULT_CONVENTION) -> np.ndarray:
+    """Ultralytics OBB output uses zero-based classes and counter-clockwise radians."""
     if obb is None or len(obb) == 0:
         return np.zeros((0, 7), dtype=np.float64)
     xywhr = obb.xywhr.cpu().numpy()
     conf = obb.conf.cpu().numpy()
     cls = obb.cls.cpu().numpy()
     rows = []
-    for (cx, cy, w, h, r), sc, c in zip(xywhr, conf, cls):
-        ang = np.rad2deg(r if conv_ccw else -r)
+    for (cx, cy, w, h, r), sc, c in zip(xywhr, conf, cls, strict=True):
+        ang = conv.from_ccw(float(np.rad2deg(r)))
         rows.append(
             [
                 float(sc),
@@ -29,7 +33,12 @@ def _yolo_to_ir(obb, conv_ccw: bool = True) -> np.ndarray:
     return np.asarray(rows, dtype=np.float64).reshape(-1, 7)
 
 
-def predict_plain(ckpt: str, frames: list[tuple[str, str]], cfg: dict) -> dict:
+def predict_plain(
+    ckpt: str,
+    frames: list[tuple[str, str]],
+    cfg: Any,
+    conv: AngleConvention = DEFAULT_CONVENTION,
+) -> dict[str, np.ndarray]:
     from ultralytics import YOLO
 
     mcfg = cfg.get("model", {})
@@ -45,14 +54,18 @@ def predict_plain(ckpt: str, frames: list[tuple[str, str]], cfg: dict) -> dict:
         verbose=False,
         augment=bool(cfg.get("tta", {}).get("enabled", False)),
     )
-    for (fid, _), res in zip(frames, results):
-        out[fid] = _yolo_to_ir(getattr(res, "obb", None))
+    for (fid, _), res in zip(frames, results, strict=True):
+        out[fid] = _yolo_to_ir(getattr(res, "obb", None), conv)
     return out
 
 
-def predict_sahi(ckpt: str, frames: list[tuple[str, str]], cfg: dict) -> dict:
+def predict_sahi(
+    ckpt: str,
+    frames: list[tuple[str, str]],
+    cfg: Any,
+    conv: AngleConvention = DEFAULT_CONVENTION,
+) -> dict[str, np.ndarray]:
     """SAHI deduplicates horizontal envelopes before OBBs are recovered."""
-    import cv2
     from sahi import AutoDetectionModel
     from sahi.predict import get_sliced_prediction
 
@@ -81,7 +94,7 @@ def predict_sahi(ckpt: str, frames: list[tuple[str, str]], cfg: dict) -> dict:
             seg = op.mask.segmentation[0] if op.mask is not None else None
             if seg is not None and len(seg) >= 8:
                 pts = np.asarray(seg, dtype=np.float32).reshape(-1, 2)
-                (cx, cy), (w, h), ang = cv2.minAreaRect(pts)
+                cx, cy, w, h, ang = corners_to_obb(pts, conv)
             else:
                 # SAHI may return no mask, so the horizontal box becomes an OBB fallback.
                 x1, y1, x2, y2 = op.bbox.to_xyxy()
