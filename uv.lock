@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.14"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
@@ -1684,7 +1684,7 @@ wheels = [
 
 [[package]]
 name = "ultralytics"
-version = "8.4.177"
+version = "8.4.178"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -1701,9 +1701,9 @@ dependencies = [
     { name = "ultralytics-platform" },
     { name = "ultralytics-thop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b7/78/afc12fcafbf1753e4db41c9a56021dc16eb1e23e852e3625cdb678128e04/ultralytics-8.4.177.tar.gz", hash = "sha256:cee81b288d28dcefa725037bb8fd41674ffd1a5438162272012ac16758de93dc", size = 1272107, upload-time = "2026-10-13T15:37:51.225Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/42/f1/5fc3f30085aa54aad4c6cebec9caa183d5174b66144fb9a46608651b8f06/ultralytics-8.4.178.tar.gz", hash = "sha256:bc768f10c8dbe370ff00ac138ebef79277b491c419fb7edf273be7d161213e4d", size = 1273734, upload-time = "2026-10-16T00:10:28.739Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/a6/07320a8c3aa5bbe411a693fff6a2e4ee41a0847b8583d390869aa5a9506f/ultralytics-8.4.177-py3-none-any.whl", hash = "sha256:de8fd2fc5ea2c51c7c8f5b50dd503d88702767395e2bc12474ec0741b846aecd", size = 1423216, upload-time = "2026-10-13T15:37:46.045Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/e0/8d280753d06b6bf7598d6af0881b960aac10c6558d139496ae68b64d4a3c/ultralytics-8.4.178-py3-none-any.whl", hash = "sha256:58d5196acf903edc14119ee2700ea1e85d9d0c97662c16f648733d5f8177aa81", size = 1423772, upload-time = "2026-10-16T00:10:23.806Z" },
 ]
 
 [[package]]
@@ -1778,7 +1778,7 @@ requires-dist = [
     { name = "sahi", marker = "extra == 'train'", specifier = ">=0.12.8" },
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "shapely", specifier = ">=2.2.0,<3" },
-    { name = "ultralytics", marker = "extra == 'train'", specifier = ">=8.4.177" },
+    { name = "ultralytics", marker = "extra == 'train'", specifier = ">=8.4.178" },
 ]
 provides-extras = ["train"]
 
