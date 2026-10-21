@@ -38,6 +38,11 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/vision"]
 
+# ultralytics and sahi require opencv-python. It installs into the same cv2/
+# directory as opencv-python-headless and breaks cv2. Keep only one wheel.
+[tool.uv]
+exclude-dependencies = ["opencv-python"]
+
 [tool.ruff]
 target-version = "py314"
 
