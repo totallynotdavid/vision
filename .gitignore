@@ -8,6 +8,10 @@ checkpoints/
 results.csv
 wandb/
 
+# local secrets
+.env
+.env.*
+
 # python
 __pycache__/
 *.pyc
