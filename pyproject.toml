@@ -9,7 +9,7 @@ dependencies = [
   "numpy>=2.5.4,<3",
   "shapely>=2.2.0,<3", # Rotated IoU geometry.
   "opencv-python-headless>=5.0.0.93", # OBB conversion, drawing, image IO.
-  "pandas>=3.0.6", # CSV inputs and run logs.
+  "pandas>=3.1.0", # CSV inputs and run logs.
   "omegaconf>=2.4.0", # Dotlist overrides and config composition.
   "scipy>=1.18.1", # Hungarian matching for tracking.
 ]
@@ -17,7 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 # Training extras pull torch and expect a GPU.
 train = [
-  "ultralytics>=8.4.183", # YOLO26-OBB backend.
+  "ultralytics>=8.4.191", # YOLO26-OBB backend.
   "sahi>=0.12.8", # Tiled inference.
 ]
 
@@ -25,8 +25,8 @@ train = [
 dev = [
   "mypy>=1.20.0",
   "pandas-stubs>=3.0.0",
-  "pytest>=9.1.1",
-  "ruff>=0.17.1",
+  "pytest>=9.2.0",
+  "ruff>=0.17.3",
   "scipy-stubs>=1.18.0",
   "types-shapely>=2.1.0",
 ]
