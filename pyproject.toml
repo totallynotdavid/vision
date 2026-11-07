@@ -17,14 +17,14 @@ dependencies = [
 [project.optional-dependencies]
 # Training extras pull torch and expect a GPU.
 train = [
-  "ultralytics>=8.4.191", # YOLO26-OBB backend.
+  "ultralytics>=8.4.194", # YOLO26-OBB backend.
   "sahi>=0.12.8", # Tiled inference.
 ]
 
 [dependency-groups]
 dev = [
-  "mypy>=1.20.0",
-  "pandas-stubs>=3.0.0",
+  "mypy>=2.4.1",
+  "pandas-stubs>=3.1.0.261029",
   "pytest>=9.2.0",
   "ruff>=0.17.3",
   "scipy-stubs>=1.18.0",
