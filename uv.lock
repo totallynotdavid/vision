@@ -3,12 +3,12 @@ revision = 5
 requires-python = ">=3.14"
 resolution-markers = [
     "python_full_version >= '3.15' and sys_platform == 'win32'",
-    "python_full_version < '3.15' and sys_platform == 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'emscripten'",
-    "python_full_version < '3.15' and sys_platform == 'emscripten'",
     "python_full_version >= '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.15' and sys_platform == 'darwin'",
+    "python_full_version < '3.15' and sys_platform == 'win32'",
+    "python_full_version < '3.15' and sys_platform == 'emscripten'",
+    "python_full_version < '3.15' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version < '3.15' and sys_platform == 'darwin'",
 ]
 
@@ -1672,7 +1672,7 @@ wheels = [
 
 [[package]]
 name = "ultralytics"
-version = "8.4.211"
+version = "8.4.212"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "matplotlib" },
@@ -1687,9 +1687,9 @@ dependencies = [
     { name = "ultralytics-platform" },
     { name = "ultralytics-thop" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fc/9e/8c052b8b2c6b32ddd041530e1c9f72fa7db0e945a2406a4ec10f60d6f451/ultralytics-8.4.211.tar.gz", hash = "sha256:9a235c0e078eee2344b117cf20fefb8d44f34b8e9a3d61b64465feaf08bd9219", size = 1322720, upload-time = "2026-11-11T23:10:15.333Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/bd/1a/79e8799b07f253dc713ecccef37cce4672b0cb193b1606deda04409e791a/ultralytics-8.4.212.tar.gz", hash = "sha256:51bfa8c0e65b96c2d7dbad3da01b8988feb1f6632f910ecbc6092fcd4e63525f", size = 1323859, upload-time = "2026-11-13T13:09:19.367Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/b8/0b66afa97d17baa30cff1e6f7e04d2f5b58456de8561189031630fd25b41/ultralytics-8.4.211-py3-none-any.whl", hash = "sha256:4d6507f3f8de4d48db08532ee3ce2b6a7bd1b2946c99235b429ee83e1261a776", size = 1462534, upload-time = "2026-11-11T23:10:10.257Z" },
+    { url = "https://files.pythonhosted.org/packages/16/f0/3250658cec8997a76326d41780dfd75e0d53280c7eb373a8aad6d4031008/ultralytics-8.4.212-py3-none-any.whl", hash = "sha256:bde0e699973fd03c7021bf7e4a1553e459e4932e322d8a24aee9eb90478b9136", size = 1463824, upload-time = "2026-11-13T13:09:14.695Z" },
 ]
 
 [[package]]
@@ -1764,7 +1764,7 @@ requires-dist = [
     { name = "sahi", marker = "extra == 'train'", specifier = ">=0.14.0" },
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "shapely", specifier = ">=2.2.0,<3" },
-    { name = "ultralytics", marker = "extra == 'train'", specifier = ">=8.4.211" },
+    { name = "ultralytics", marker = "extra == 'train'", specifier = ">=8.4.212" },
 ]
 provides-extras = ["train"]
 
