@@ -12,6 +12,14 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: cuda-toolkit
+      - dependency-name: mpmath
+      - dependency-name: nvidia-cudnn-cu13
+      - dependency-name: nvidia-cusparselt-cu13
+      - dependency-name: nvidia-nccl-cu13
+      - dependency-name: nvidia-nvshmem-cu13
+      - dependency-name: uv
 
   - package-ecosystem: github-actions
     directories:
@@ -26,3 +34,11 @@ updates:
           - major
           - minor
           - patch
+    ignore:
+      - dependency-name: cuda-toolkit
+      - dependency-name: mpmath
+      - dependency-name: nvidia-cudnn-cu13
+      - dependency-name: nvidia-cusparselt-cu13
+      - dependency-name: nvidia-nccl-cu13
+      - dependency-name: nvidia-nvshmem-cu13
+      - dependency-name: uv
